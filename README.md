@@ -1,2 +1,3 @@
 # au-java-II-fall-2016
-Java course @ SPbAU, fall 2016
+
+Primitive VCS(version control system) with no future
