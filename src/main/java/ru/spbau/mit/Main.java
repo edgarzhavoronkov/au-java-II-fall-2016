@@ -1,9 +1,7 @@
 package ru.spbau.mit;
 
 import ru.spbau.mit.repository.Repository;
-import ru.spbau.mit.util.Hasher;
 
-import java.util.Date;
 import java.util.Scanner;
 
 /**
@@ -14,12 +12,9 @@ import java.util.Scanner;
  */
 public class Main {
     public static void main(String[] args) {
-
-        System.out.println(Hasher.getHash(String.valueOf(System.currentTimeMillis())));
-
         System.out.println("Hello!");
         try {
-            Repository repo = new Repository(".repo");
+            Repository repo = new Repository("src/main/resources/");
             Scanner scanner = new Scanner(System.in);
             while (true) {
                 System.out.print(">> ");
