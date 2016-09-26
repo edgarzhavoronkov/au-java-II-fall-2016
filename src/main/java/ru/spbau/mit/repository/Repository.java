@@ -3,8 +3,12 @@ package ru.spbau.mit.repository;
 import ru.spbau.mit.branch.Branch;
 import ru.spbau.mit.command.Command;
 import ru.spbau.mit.command.CommandProvider;
+import ru.spbau.mit.commit.Commit;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,10 +51,37 @@ public class Repository {
                         )
                 )
         );
-        for (Path p : directoryStream) {
-            String branchName = p.getFileName().toString();
-            branches.put(branchName, new Branch(branchName));
-            //TODO: set all commits
+        for (Path branchPath : directoryStream) {
+            String branchName = branchPath.getFileName().toString();
+            Branch branch = new Branch(branchName);
+
+            //get all the commits in branch
+            String commitDirectoryName = String.format("%s/.repo/branches/%s/", repoPath, branchName);
+            DirectoryStream<Path> commitsDirectoryStream = Files.newDirectoryStream(Paths.get(commitDirectoryName));
+            for (Path folder : commitsDirectoryStream) {
+                String commitNumber = folder.getFileName().toString();
+                String commitFolder = String.format("%s/%s/", commitDirectoryName, commitNumber);
+                String descriptionFileName = commitFolder + "/description";
+                List<String> filesInCommit = new ArrayList<>();
+                DirectoryStream<Path> filesInCommitStream = Files.newDirectoryStream(Paths.get(commitFolder));
+                //read description
+                Path descriptionFile = Paths.get(descriptionFileName);
+                InputStream in = Files.newInputStream(descriptionFile);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                String line = null;
+                StringBuilder commitMessage = new StringBuilder();
+                while ((line = reader.readLine()) != null) {
+                    commitMessage.append(line);
+                }
+                for (Path filename : filesInCommitStream) {
+                    if (!filename.getFileName().toString().equals("description")) {
+                        filesInCommit.add(filename.getFileName().toString());
+                    }
+                }
+                Commit commit = new Commit(commitNumber, commitMessage.toString(), filesInCommit);
+                branch.addCommit(commit);
+            }
+            branches.put(branchName, branch);
         }
         currentBranch = branches.get("def");
     }
