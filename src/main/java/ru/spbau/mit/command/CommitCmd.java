@@ -12,7 +12,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by Эдгар on 25.09.2016.
@@ -20,9 +23,9 @@ import java.util.ArrayList;
 public class CommitCmd implements Command {
     @Override
     public String execute(Repository repository, String[] args) {
-        String commitNumber = Hasher.getHash(
-                String.valueOf(System.currentTimeMillis())
-        );
+        DateFormat dateFormat = new SimpleDateFormat("yyyy:MM:dd:HH:mm:ss");
+        Date date = new Date();
+        String commitNumber = dateFormat.format(date);
         String commitMessage = "";
         for (int i = 0; i < args.length; ++i) {
             if (args[i].equals("-m")) {

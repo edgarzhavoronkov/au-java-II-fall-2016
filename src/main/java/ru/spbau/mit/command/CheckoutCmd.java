@@ -46,7 +46,7 @@ public class CheckoutCmd implements Command {
             Branch targetBranch = repository.getBranches().get(branchName);
             if (targetBranch != null) {
                 if (!targetBranch.getCommits().isEmpty()) {
-                    Commit targetCommit = targetBranch.getCommits().get(targetBranch.getCommits().size() - 1);
+                    Commit targetCommit = targetBranch.getCommits().get(0);
                     return updateRepository(repository, targetBranch, targetCommit);
                 } else {
                     repository.setCurrentBranch(targetBranch);
