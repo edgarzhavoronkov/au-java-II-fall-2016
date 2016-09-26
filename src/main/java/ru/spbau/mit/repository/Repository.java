@@ -30,8 +30,6 @@ public class Repository {
     private List<String> addedFiles = new ArrayList<>();
     private Branch currentBranch;
 
-    //TODO: add logger
-
     public Repository() throws IOException {
         repoPath = ".";
         new Repository(".");
@@ -87,11 +85,29 @@ public class Repository {
     }
 
     public String execute(String input) {
-        //TODO: parse instead of splitting
-        String[] split = input.split("\\s+");
-        String cmdName = split[0];
-        String[] args = new String[split.length - 1];
-        System.arraycopy(split, 1, args, 0, split.length - 1);
+        int left = 0;
+        boolean inQuotes = false;
+        List<String> split = new ArrayList<>();
+        for (int right = 0; right < input.length(); ++right) {
+            char ch = input.charAt(right);
+
+            if (ch == ' ' && !inQuotes) {
+                split.add(input.substring(left, right));
+                left = right + 1;
+            }
+
+            if (ch == '\"') {
+                inQuotes ^= true;
+            }
+        }
+        split.add(input.substring(left));
+
+        String cmdName = split.get(0);
+        String[] args = new String[split.size() - 1];
+        for (int i = 1; i < split.size(); ++i) {
+            args[i - 1] = split.get(i);
+        }
+
         Command cmd = CommandProvider.forName(cmdName);
         if (cmd != null) {
             return cmd.execute(this, args);

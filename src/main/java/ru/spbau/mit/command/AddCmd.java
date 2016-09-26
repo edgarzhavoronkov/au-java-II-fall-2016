@@ -12,7 +12,6 @@ import java.util.List;
 public class AddCmd implements Command {
     @Override
     public String execute(Repository repository, String[] args) {
-        //TODO: rewrite
         List<String> files = repository.getAddedFiles();
         Collections.addAll(files, args);
         repository.setAddedFiles(files);
