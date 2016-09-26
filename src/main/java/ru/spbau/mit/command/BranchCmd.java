@@ -4,9 +4,8 @@ import ru.spbau.mit.branch.Branch;
 import ru.spbau.mit.repository.Repository;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 
 /**
  * Created by Эдгар on 25.09.2016.
@@ -44,13 +43,25 @@ public class BranchCmd implements Command {
                         if (removed != null) {
                             Path pathToBranch = Paths.get(
                                     String.format(
-                                            "%s/.repo/branches/%s"
+                                            "%s/.repo/branches/%s/"
                                             , repository.getRepoPath()
                                             , branchName
                                     )
                             );
                             try {
-                                Files.delete(pathToBranch);
+                                Files.walkFileTree(pathToBranch, new SimpleFileVisitor<Path>() {
+                                    @Override
+                                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                                        Files.delete(file);
+                                        return FileVisitResult.CONTINUE;
+                                    }
+
+                                    @Override
+                                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                                        Files.delete(dir);
+                                        return FileVisitResult.CONTINUE;
+                                    }
+                                });
                             } catch (IOException e) {
                                 return String.format("Failed to remove branch %s due to I/O error", branchName);
                             }
@@ -64,6 +75,6 @@ public class BranchCmd implements Command {
                 }
             }
         }
-        return "Branch name can't be null. Please provide name of a branch";
+        return "I have no idea what did you wanted me to do =(";
     }
 }

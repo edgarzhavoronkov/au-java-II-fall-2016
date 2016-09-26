@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 /**
  * Created by Эдгар on 25.09.2016.
@@ -44,18 +45,13 @@ public class CheckoutCmd implements Command {
         } else if (!branchName.isEmpty() && commitNumber.isEmpty()) {
             Branch targetBranch = repository.getBranches().get(branchName);
             if (targetBranch != null) {
-                Commit lastCommit = targetBranch.getCommits().get(targetBranch.getCommits().size() - 1);
-                String lastCommitNumber = lastCommit.getNumber();
-                Path currentRepoPath = Paths.get(System.getProperty("user.dir"));
-                for (String filename : lastCommit.getFiles()) {
-                    try {
-                        Files.copy(Paths.get(filename), currentRepoPath);
-                    } catch (IOException e) {
-                        return "Checkout failed for no reasons";
-                    }
+                if (!targetBranch.getCommits().isEmpty()) {
+                    Commit targetCommit = targetBranch.getCommits().get(targetBranch.getCommits().size() - 1);
+                    return updateRepository(repository, targetBranch, targetCommit);
+                } else {
+                    repository.setCurrentBranch(targetBranch);
+                    return String.format("Checked out empty branch %s", branchName);
                 }
-                repository.setCurrentBranch(targetBranch);
-                return String.format("Checked out branch %s at commit %s", branchName, lastCommitNumber);
             } else {
                 return String.format("No branch %s found!", branchName);
             }
@@ -72,21 +68,10 @@ public class CheckoutCmd implements Command {
                 }
             }
             if (targetCommit != null && targetBranch != null) {
-                String targetCommitNumber = targetCommit.getNumber();
-                Path currentRepoPath = Paths.get(System.getProperty("user.dir"));
-                for (String filename : targetCommit.getFiles()) {
-                    try {
-                        Files.copy(Paths.get(filename), currentRepoPath);
-                    } catch (IOException e) {
-                        return "Checkout failed for no reasons";
-                    }
-                }
-                repository.setCurrentBranch(targetBranch);
-                return String.format("Checked out branch %s at commit %s", targetBranch.getName(), targetCommitNumber);
+                return updateRepository(repository, targetBranch, targetCommit);
             } else {
                 return String.format("Failed to find commit %s in all the branches", commitNumber);
             }
-
         } else {
             Branch targetBranch = repository.getBranches().get(branchName);
             if (targetBranch != null) {
@@ -98,16 +83,7 @@ public class CheckoutCmd implements Command {
                     }
                 }
                 if (targetCommit != null) {
-                    Path currentRepoPath = Paths.get(System.getProperty("user.dir"));
-                    for (String filename : targetCommit.getFiles()) {
-                        try {
-                            Files.copy(Paths.get(filename), currentRepoPath);
-                        } catch (IOException e) {
-                            return "Checkout failed for no reasons";
-                        }
-                    }
-                    repository.setCurrentBranch(targetBranch);
-                    return String.format("Checked out branch %s at commit %s", targetBranch.getName(), commitNumber);
+                    return updateRepository(repository, targetBranch, targetCommit);
                 } else {
                     return String.format("No commit %s found", commitNumber);
                 }
@@ -115,5 +91,22 @@ public class CheckoutCmd implements Command {
                 return String.format("No branch %s found", branchName);
             }
         }
+    }
+
+    private String updateRepository(Repository repository, Branch targetBranch, Commit targetCommit) {
+        String targetBranchName = targetBranch.getName();
+        String targetCommitNumber = targetCommit.getNumber();
+        String pathToFileInCommit = String.format("%s/.repo/branches/%s/%s/", repository.getRepoPath(), targetBranchName, targetCommitNumber);
+        for (String filename : targetCommit.getFiles()) {
+            Path target = Paths.get(repository.getRepoPath() + filename);
+            Path source = Paths.get(pathToFileInCommit + filename);
+            try {
+                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                return "Checkout failed for no reasons";
+            }
+        }
+        repository.setCurrentBranch(targetBranch);
+        return String.format("Checked out branch %s at commit %s", targetBranchName, targetCommitNumber);
     }
 }

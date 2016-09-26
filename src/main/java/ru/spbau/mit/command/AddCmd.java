@@ -12,9 +12,10 @@ import java.util.List;
 public class AddCmd implements Command {
     @Override
     public String execute(Repository repository, String[] args) {
-        List<String> files = new ArrayList<>();
+        //TODO: rewrite
+        List<String> files = repository.getAddedFiles();
         Collections.addAll(files, args);
         repository.setAddedFiles(files);
-        return String.format("Added %d file(s)", files.size());
+        return String.format("Added %d file(s)", args.length);
     }
 }

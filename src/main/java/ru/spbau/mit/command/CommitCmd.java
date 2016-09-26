@@ -63,8 +63,7 @@ public class CommitCmd implements Command {
             repository.getCurrentBranch().addCommit(commit);
             repository.setAddedFiles(new ArrayList<>());
         } catch (IOException e) {
-            e.printStackTrace();
-            return "Some I/O problem occurred";
+            return "Some I/O problem occurred! Maybe file not present or else";
         }
         return String.format("Commit %s created", commitNumber);
     }

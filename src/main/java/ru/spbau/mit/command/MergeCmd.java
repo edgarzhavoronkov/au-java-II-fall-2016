@@ -29,8 +29,10 @@ public class MergeCmd implements Command {
                     //unholy bottleneck
                     for (String filename1 : lastCommitInSrc.getFiles()) {
                         for (String filename2 : lastCommitInDst.getFiles()) {
-                            String hash1 = Hasher.getFileHash(filename1);
-                            String hash2 = Hasher.getFileHash(filename2);
+                            String fullPath1 = String.format("%s/.repo/branches/%s/%s/%s", repository.getRepoPath(), args[0], lastCommitInSrc.getNumber(), filename1);
+                            String fullPath2 = String.format("%s/.repo/branches/%s/%s/%s", repository.getRepoPath(), args[1], lastCommitInDst.getNumber(), filename2);
+                            String hash1 = Hasher.getFileHash(fullPath1);
+                            String hash2 = Hasher.getFileHash(fullPath2);
                             if (hash1 != null) {
                                 if (filename1.equals(filename2) && !hash1.equals(hash2)) {
                                     return "Conflict in merge. Aborting!";
@@ -40,8 +42,15 @@ public class MergeCmd implements Command {
                     }
 
                     List<String> newFiles = new ArrayList<>();
-                    newFiles.addAll(lastCommitInSrc.getFiles());
-                    newFiles.addAll(lastCommitInDst.getFiles());
+                    for (String filename1 : lastCommitInSrc.getFiles()) {
+                        String fullPath1 = String.format("%s/.repo/branches/%s/%s/%s", repository.getRepoPath(), args[0], lastCommitInSrc.getNumber(), filename1);
+                        newFiles.add(fullPath1);
+                    }
+
+                    for (String filename2 : lastCommitInDst.getFiles()) {
+                        String fullPath2 = String.format("%s/.repo/branches/%s/%s/%s", repository.getRepoPath(), args[1], lastCommitInDst.getNumber(), filename2);
+                        newFiles.add(fullPath2);
+                    }
 
                     String newCommitNumber = Hasher.getHash(String.valueOf(System.currentTimeMillis()));
                     String newCommitMessage = String.format("Merge branch %s into branch %s", args[0], args[1]);
@@ -49,8 +58,9 @@ public class MergeCmd implements Command {
 
                     Path destination = Paths.get(
                             String.format(
-                                    "%s/.repo/branches/%s"
+                                    "%s/.repo/branches/%s/%s"
                                     , repository.getRepoPath()
+                                    , args[1]
                                     , newCommitNumber
                             )
                     );
