@@ -9,6 +9,9 @@ import java.util.List;
 
 /**
  * Created by Эдгар on 25.09.2016.
+ * Abstraction for commit in VCS
+ * Knows about {@link Branch}, parent commit
+ * Also knows information about added and removed files
  */
 @EqualsAndHashCode
 public class Commit implements Serializable {

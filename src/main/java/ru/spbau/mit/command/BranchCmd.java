@@ -10,7 +10,7 @@ import ru.spbau.mit.exceptions.CommandFailException;
 public class BranchCmd implements Command {
     @Override
     public String execute(Environment environment, String[] args) {
-        if (!environment.getRepoUtils().isInit()) {
+        if (!environment.getVcsCore().isInit()) {
             throw new CommandFailException("Repository has not been init");
         }
 
@@ -20,10 +20,10 @@ public class BranchCmd implements Command {
 
         if (args[0].equals("-c")) {
             Branch branch = environment.getRepository().addNewBranch(args[1]);
-            return String.format("Branch %s was successfully created", args[1]);
+            return String.format("Branch %s was successfully created", branch.getName());
         } else if (args[0].equals("-d")) {
             Branch branch = environment.getRepository().removeBranch(args[1]);
-            return String.format("Branch %s was successfully removed", args[1]);
+            return String.format("Branch %s was successfully removed", branch.getName());
         } else {
             throw new CommandFailException("I can't figure out what do you want me to do =(");
         }

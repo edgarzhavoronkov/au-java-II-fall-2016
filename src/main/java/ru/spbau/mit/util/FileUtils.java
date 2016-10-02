@@ -5,7 +5,8 @@ import java.nio.file.Path;
 
 /**
  * Created by Эдгар on 01.10.2016.
- * Wrapper around Apache FileUtils
+ * Wrapper around Apache FileUtils so i can easily ask whether repository exists etc
+ *
  */
 public class FileUtils {
     private static final String VCS_FOLDER_NAME = ".repo";
@@ -17,7 +18,6 @@ public class FileUtils {
     public FileUtils(File workingDirectory) {
         this.workingDirectory = workingDirectory;
     }
-
 
     public Path getCurrentDirectory() {
         return null;

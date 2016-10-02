@@ -14,7 +14,7 @@ import java.util.Map;
 public class MergeCmd implements Command {
     @Override
     public String execute(Environment environment, String[] args) {
-        if (environment.getRepoUtils().isInit()) {
+        if (environment.getVcsCore().isInit()) {
             throw new CommandFailException("Repository has not been init");
         }
 
@@ -48,11 +48,11 @@ public class MergeCmd implements Command {
                 .getCommitNumber();
 
         List<Commit> pathFromSrc = environment
-                .getRepoUtils()
+                .getVcsCore()
                 .getPathFromCommit(environment.getRepository(), lastCommitNumberInSrc);
 
         List<Commit> pathFromDst = environment
-                .getRepoUtils()
+                .getVcsCore()
                 .getPathFromCommit(environment.getRepository(), lastCommitNumberInDst);
 
         int i = pathFromSrc.size() - 1;
@@ -72,10 +72,10 @@ public class MergeCmd implements Command {
 
         environment.getFileUtils().clearProject();
 
-        Map<FileInfo, Commit> changes = environment.getRepoUtils()
+        Map<FileInfo, Commit> changes = environment.getVcsCore()
                 .collectChanges(environment.getRepository(), ancestor.getCommitNumber());
 
-        environment.getRepoUtils().copyFromCommitDirs(changes);
+        environment.getVcsCore().copyFromCommitDirs(changes);
 
         return String.format("Merged branch %s into %s", srcBranchName, dstBranchName);
 

@@ -12,11 +12,11 @@ import ru.spbau.mit.exceptions.CommandFailException;
 public class CheckoutCmd implements Command {
     @Override
     public String execute(Environment environment, String[] args) {
-        if (!environment.getRepoUtils().isInit()) {
+        if (!environment.getVcsCore().isInit()) {
             throw new CommandFailException("Repository has not been init");
         }
 
-        if (!environment.getRepoUtils().haveUncommittedChanges()) {
+        if (!environment.getVcsCore().haveUncommittedChanges()) {
             throw new CommandFailException("You have changes to commit! Commit them, or they will probably be lost");
         }
 
@@ -25,20 +25,21 @@ public class CheckoutCmd implements Command {
         }
 
 
-        if (args[0].equals("-c")) {
-            environment.getRepository().checkoutCommit(args[1]);
+        switch (args[0]) {
+            case "-c":
+                environment.getRepository().checkoutCommit(args[1]);
 
-            //TODO: boilerplate about collecting files
+                //TODO: boilerplate about collecting files
 
-            return String.format("Checked out commit %s", args[1]);
-        } else if (args[0].equals("-b")) {
-            environment.getRepository().checkoutBranch(args[1]);
+                return String.format("Checked out commit %s", args[1]);
+            case "-b":
+                environment.getRepository().checkoutBranch(args[1]);
 
-            //TODO: boilerplate about collecting files
+                //TODO: boilerplate about collecting files
 
-            return String.format("Checked out branch %s", args[1]);
-        } else {
-            throw new CommandFailException("Wrong key! Use either -c to checkout to certain commit or -b to checkout to a particular commit");
+                return String.format("Checked out branch %s", args[1]);
+            default:
+                throw new CommandFailException("Wrong key! Use either -c to checkout to certain commit or -b to checkout to a particular commit");
         }
     }
 }

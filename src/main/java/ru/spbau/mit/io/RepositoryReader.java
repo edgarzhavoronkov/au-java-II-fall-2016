@@ -9,9 +9,10 @@ import java.io.ObjectInputStream;
 
 /**
  * Created by Эдгар on 01.10.2016.
+ * Class for deserializing {@link Repository} from {@link InputStream}
  */
 public class RepositoryReader {
-    public Repository read(InputStream in) throws ReadFailedException{
+    public static Repository read(InputStream in) throws ReadFailedException{
         try (ObjectInputStream objectInputStream = new ObjectInputStream(in)) {
             return (Repository) objectInputStream.readObject();
         } catch (ClassNotFoundException | IOException e) {

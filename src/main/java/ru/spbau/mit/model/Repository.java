@@ -1,6 +1,7 @@
 package ru.spbau.mit.model;
 
 import lombok.Getter;
+import ru.spbau.mit.util.CommitNameProvider;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -10,7 +11,9 @@ import java.util.Map;
 
 /**
  * Created by Эдгар on 25.09.2016.
- * Class for serializable repository
+ * Abstraction for serializable repository
+ * internal state is presented by list of branches,
+ * name of the current branch and number of current commit(like HEAD)
  */
 public class Repository implements Serializable {
     private final List<Branch> branches = new ArrayList<>();
@@ -55,7 +58,13 @@ public class Repository implements Serializable {
 
     public Commit addNewCommit(String message, List<FileInfo> addedFiles, List<FileInfo> removedFiles) {
         Branch currentBranch = getAllBranches().get(currentBranchName);
-        Commit commit = currentBranch.addCommit(message, currentCommitNumber, addedFiles, removedFiles);
+        String newCommitNumber = CommitNameProvider.getNewName();
+        Commit commit = currentBranch.addCommit(
+                message
+                , newCommitNumber
+                , currentCommitNumber
+                , addedFiles
+                , removedFiles);
         checkoutCommit(commit.getCommitNumber());
         return commit;
     }
@@ -68,7 +77,9 @@ public class Repository implements Serializable {
             currentBranchName = commit.getBranchName();
             return;
         }
-        throw new RuntimeException(String.format("No commit %s found", commitNumber));
+        throw new RuntimeException(
+                String.format("No commit %s found", commitNumber)
+        );
     }
 
     public void checkoutBranch(String branchName) {
@@ -80,7 +91,9 @@ public class Repository implements Serializable {
             return;
         }
 
-        throw new RuntimeException(String.format("No branch %s found", branchName));
+        throw new RuntimeException(
+                String.format("No branch %s found", branchName)
+        );
     }
 
     public Branch getBranchByName(String branchName) {

@@ -15,7 +15,7 @@ import java.util.List;
 public class AddCmd implements Command {
     @Override
     public String execute(Environment environment, String[] args) {
-        if (!environment.getRepoUtils().isInit()) {
+        if (!environment.getVcsCore().isInit()) {
             throw new CommandFailException("Repository has not been init");
         }
 
@@ -32,8 +32,7 @@ public class AddCmd implements Command {
         }
 
         List<String> addedFileNames = Arrays.asList(args);
-        environment.getRepoUtils().addToStagedFiles(addedFileNames);
-
+        environment.getVcsCore().addToStagedFiles(addedFileNames);
 
         return String.format("Added %d file(s)", addedFileNames.size());
     }

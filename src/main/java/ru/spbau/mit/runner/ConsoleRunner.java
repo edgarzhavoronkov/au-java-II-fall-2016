@@ -7,9 +7,10 @@ import ru.spbau.mit.exceptions.CommandFailException;
 
 /**
  * Created by Эдгар on 30.09.2016.
+ * Implementation of {@link Runner} interface
+ * Runs commands which are given from the console
  */
 public class ConsoleRunner implements Runner {
-
     @Override
     public void run(String[] args, Environment environment) {
         if (args.length == 0) {

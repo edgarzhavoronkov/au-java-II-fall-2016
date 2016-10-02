@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class LogCmd implements Command {
     @Override
     public String execute(Environment environment, String[] args) {
-        if (environment.getRepoUtils().isInit()) {
+        if (environment.getVcsCore().isInit()) {
             throw new CommandFailException("Repository has not been init");
         }
 

@@ -1,25 +1,31 @@
-package ru.spbau.mit.util;
+package ru.spbau.mit;
 
 import ru.spbau.mit.model.FileInfo;
 import ru.spbau.mit.model.Commit;
 import ru.spbau.mit.model.Repository;
+import ru.spbau.mit.util.FileUtils;
 
 import java.util.List;
 import java.util.Map;
 
 /**
  * Created by Эдгар on 01.10.2016.
- * Wrapper around Repository for serializing and deserializing repository
+ * Core class for VCS which does all the job
+ * with filesystem using corresponding wrapper
  */
-public class RepoUtils {
+public class VcsCore {
     private final FileUtils fileUtils;
 
-    public RepoUtils(FileUtils fileUtils) {
+    public VcsCore(FileUtils fileUtils) {
         this.fileUtils = fileUtils;
     }
 
     public Repository loadRepositoryFromDisk() {
         return null;
+    }
+
+    public void saveRepositoryToDisk(Repository repository) {
+
     }
 
     public boolean isInit() {

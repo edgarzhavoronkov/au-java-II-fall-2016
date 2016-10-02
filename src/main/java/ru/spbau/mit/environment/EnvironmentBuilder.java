@@ -2,7 +2,7 @@ package ru.spbau.mit.environment;
 
 import ru.spbau.mit.model.Repository;
 import ru.spbau.mit.util.FileUtils;
-import ru.spbau.mit.util.RepoUtils;
+import ru.spbau.mit.VcsCore;
 
 import java.io.File;
 
@@ -16,8 +16,8 @@ public class EnvironmentBuilder {
 
     public static Environment init(File repositoryDir) {
         FileUtils fileUtils = new FileUtils(repositoryDir);
-        RepoUtils repoUtils = new RepoUtils(fileUtils);
-        Repository repository = repoUtils.loadRepositoryFromDisk();
-        return new Environment(repository, fileUtils, repoUtils);
+        VcsCore vcsCore = new VcsCore(fileUtils);
+        Repository repository = vcsCore.loadRepositoryFromDisk();
+        return new Environment(repository, fileUtils, vcsCore);
     }
 }

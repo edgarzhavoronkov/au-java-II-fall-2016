@@ -18,7 +18,7 @@ import java.util.Map;
 public class CommitCmd implements Command {
     @Override
     public String execute(Environment environment, String[] args) {
-        if (!environment.getRepoUtils().isInit()) {
+        if (!environment.getVcsCore().isInit()) {
             throw new CommandFailException("Repository has not been init");
         }
 
@@ -29,7 +29,7 @@ public class CommitCmd implements Command {
         if (args[0].equals("-m")) {
             String commitMessage = args[1];
 
-            Map<FileInfo, Commit> changes = environment.getRepoUtils().collectChanges(environment.getRepository());
+            Map<FileInfo, Commit> changes = environment.getVcsCore().collectChanges(environment.getRepository());
 
             List<FileInfo> modifiedFiles = new ArrayList<>();
             List<FileInfo> removedFiles = new ArrayList<>();
@@ -47,7 +47,7 @@ public class CommitCmd implements Command {
                 }
             }
 
-            List<String> addedFiles = environment.getRepoUtils().getAddedFiles();
+            List<String> addedFiles = environment.getVcsCore().getAddedFiles();
             for (String filename : addedFiles) {
                 File file = new File(currentDirectory.toFile(), filename);
                 if (file.exists()) {
@@ -58,8 +58,8 @@ public class CommitCmd implements Command {
 
             Commit commit = environment.getRepository().addNewCommit(commitMessage, modifiedFiles, removedFiles);
 
-            environment.getRepoUtils().copyFilesToCommitDirectory(commit);
-            environment.getRepoUtils().clearStagedFiles();
+            environment.getVcsCore().copyFilesToCommitDirectory(commit);
+            environment.getVcsCore().clearStagedFiles();
 
             return String.format("Commit %s created", commit.getCommitNumber());
         } else {
