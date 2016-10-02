@@ -5,21 +5,24 @@ import java.util.Map;
 
 /**
  * Created by Эдгар on 25.09.2016.
+ * Simple factory for commands
  */
 public class CommandProvider {
-    private static final Map<String, Command> cmds = new HashMap<>();
+    private static final Map<String, Command> commands = new HashMap<>();
 
     static {
-        cmds.put("add", new AddCmd());
-        cmds.put("branch", new BranchCmd());
-        cmds.put("commit", new CommitCmd());
-        cmds.put("checkout", new CheckoutCmd());
-        cmds.put("log", new LogCmd());
-        cmds.put("merge", new MergeCmd());
+        commands.put("add", new AddCmd());
+        commands.put("branch", new BranchCmd());
+        commands.put("checkout", new CheckoutCmd());
+        commands.put("commit", new CommitCmd());
+        commands.put("init", new InitCmd());
+        commands.put("log", new LogCmd());
+        commands.put("merge", new MergeCmd());
+
     }
 
     public static Command forName(String name) {
-        return cmds.get(name);
+        return commands.get(name);
     }
 
 }

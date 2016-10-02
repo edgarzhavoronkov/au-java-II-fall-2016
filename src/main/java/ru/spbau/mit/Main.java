@@ -1,32 +1,21 @@
 package ru.spbau.mit;
 
-import ru.spbau.mit.repository.Repository;
-
-import java.util.Scanner;
+import ru.spbau.mit.environment.EnvironmentBuilder;
+import ru.spbau.mit.environment.Environment;
+import ru.spbau.mit.runner.ConsoleRunner;
+import ru.spbau.mit.runner.Runner;
 
 /**
- * Created by Эдгар on 25.09.2016.
- * The main class for vcs.
- * Creates a repository directory with default branch 'def'
- * and runs REPL prompt
+ * Created by Edgar on 25.09.2016.
+ * Main class for vcs
+ * Takes command and its' arguments as command-line arguments
+ * It's more convenient since JVM parses input for me
+ * Also, it doesn't split input by spaces if they are in double quotes
  */
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello!");
-        try {
-            Repository repo = new Repository("src/main/resources/");
-            Scanner scanner = new Scanner(System.in);
-            while (true) {
-                System.out.print(">> ");
-                String input = scanner.nextLine();
-                if ("exit".equals(input)) {
-                    System.exit(0);
-                }
-                String output = repo.execute(input);
-                System.out.println(output);
-            }
-        } catch (Exception e) {
-            System.out.println("Something gone wrong! Probably your JVM has no right to create folders or so");
-        }
+        Environment environment = EnvironmentBuilder.init();
+        Runner runner = new ConsoleRunner();
+        runner.run(args, environment);
     }
 }

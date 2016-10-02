@@ -1,8 +1,11 @@
 package ru.spbau.mit.command;
 
-import ru.spbau.mit.repository.Repository;
+import ru.spbau.mit.environment.Environment;
+import ru.spbau.mit.exceptions.CommandFailException;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -11,10 +14,27 @@ import java.util.List;
  */
 public class AddCmd implements Command {
     @Override
-    public String execute(Repository repository, String[] args) {
-        List<String> files = repository.getAddedFiles();
-        Collections.addAll(files, args);
-        repository.setAddedFiles(files);
-        return String.format("Added %d file(s)", args.length);
+    public String execute(Environment environment, String[] args) {
+        if (!environment.getRepoUtils().isInit()) {
+            throw new CommandFailException("Repository has not been init");
+        }
+
+        if (args.length == 0) {
+            throw new CommandFailException("I have no files to add");
+        }
+
+        Path currentDirectory = environment.getFileUtils().getCurrentDirectory();
+
+        for (String arg : args) {
+            if (!new File(currentDirectory.toString(), arg).exists()) {
+                throw new CommandFailException(String.format("No file %s found", arg));
+            }
+        }
+
+        List<String> addedFileNames = Arrays.asList(args);
+        environment.getRepoUtils().addToStagedFiles(addedFileNames);
+
+
+        return String.format("Added %d file(s)", addedFileNames.size());
     }
 }
