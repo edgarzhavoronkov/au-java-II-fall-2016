@@ -18,7 +18,9 @@ public class CommandProvider {
         commands.put("init", new InitCmd());
         commands.put("log", new LogCmd());
         commands.put("merge", new MergeCmd());
-
+        commands.put("reset", new ResetCmd());
+        commands.put("rm", new RmCmd());
+        commands.put("status", new StatusCmd());
     }
 
     public static Command forName(String name) {

@@ -1,129 +1,182 @@
 package ru.spbau.mit.model;
 
 import lombok.Getter;
-import ru.spbau.mit.util.CommitNameProvider;
+import org.apache.commons.io.FileUtils;
+import ru.spbau.mit.core.VcsCore;
+import ru.spbau.mit.exceptions.MergeFailedException;
+import ru.spbau.mit.io.SnapshotReader;
+import ru.spbau.mit.io.SnapshotWriter;
+import ru.spbau.mit.util.FileSystem;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Created by Эдгар on 25.09.2016.
- * Abstraction for serializable repository
- * internal state is presented by list of branches,
- * name of the current branch and number of current commit(like HEAD)
  */
-public class Repository implements Serializable {
-    private final List<Branch> branches = new ArrayList<>();
-    
-    private transient Map<String, Branch> allBranches;
-    private transient Map<String, Commit> allCommits;
-    
+public class Repository {
+    private final String workingDirectory;
     @Getter
-    private String currentBranchName;
-    
-    @Getter
-    private String currentCommitNumber;
+    private final Set<String> trackedFiles = new HashSet<>();
 
-    public Repository() {
-        addNewBranch("def");
+    public Repository(String workingDirectory) {
+        this.workingDirectory = workingDirectory;
     }
 
-    public Branch addNewBranch(String name) {
-        Branch newBranch = new Branch(name);
-        if (allBranches.get(name) != null) {
-            throw new RuntimeException(String.format("Branch %s already exists", name));
+    public void addFiles(String[] filenames) {
+        processFiles(filenames, this::addFile);
+    }
+
+    public void removeFiles(String[] filenames) {
+        processFiles(filenames, this::removeFile);
+    }
+
+    public void clean() {
+        Snapshot snapshot = getCurrentSnapshot();
+        snapshot.filenameSet()
+                .stream()
+                .filter(file -> !trackedFiles.contains(file))
+                .forEach(file -> FileUtils.deleteQuietly(new File(workingDirectory, file)));
+    }
+
+    public void resetFile(String filename, long commitNumber) throws IOException {
+        Snapshot snapshot = getSnapshotByCommitNumber(commitNumber);
+        if (!snapshot.contains(filename)) {
+            trackedFiles.remove(filename);
+        } else {
+            String hash = snapshot.getFileHash(filename);
+            FileUtils.copyFile(new File(getDataDirectory(), hash), new File(workingDirectory, filename));
         }
-        branches.add(newBranch);
-        allBranches.put(name, newBranch);
-        checkoutBranch(name);
-        return newBranch;
     }
 
-    public Branch removeBranch(String branchName) {
-        Branch removed = allBranches.get(branchName);
-        if (removed != null) {
-            for (int i = 0; i < branches.size(); i++) {
-                if (branches.get(i).getName().equals(branchName)) {
-                    branches.remove(i);
-                    allBranches.remove(branchName);
-                    return removed;
+    public Snapshot getCurrentSnapshot() {
+        Collection<File> allFiles = FileSystem.listExternalFiles(new File(workingDirectory));
+        Snapshot snapshot = new Snapshot();
+        for (File file : allFiles) {
+            String relativePath = FileSystem.getRelativePath(file, workingDirectory);
+            snapshot.addFile(relativePath, FileSystem.getNewHash(file));
+        }
+        return snapshot;
+    }
+
+    public Snapshot getSnapshotByCommitNumber(long commitNumber) {
+        File snapshotFile = getSnapshotFile(commitNumber);
+        return SnapshotReader.readSnapshot(snapshotFile);
+    }
+
+    public void saveCommit(long commitNumber) throws IOException {
+        Snapshot snapshot = new Snapshot();
+        for (String filename : trackedFiles) {
+            File file = new File(workingDirectory, filename);
+            if (file.exists()) {
+                String hash = FileSystem.getNewHash(file);
+                snapshot.addFile(filename, hash);
+                File dataFile = new File(getDataDirectory(), "data");
+                if (!dataFile.exists()) {
+                    FileUtils.copyFile(file, dataFile);
                 }
             }
         }
-        throw new RuntimeException(String.format("Branch %s was not found", branchName));
+        SnapshotWriter.writeSnapshot(snapshot, getSnapshotFile(commitNumber));
     }
 
-    public Commit addNewCommit(String message, List<FileInfo> addedFiles, List<FileInfo> removedFiles) {
-        Branch currentBranch = getAllBranches().get(currentBranchName);
-        String newCommitNumber = CommitNameProvider.getNewName();
-        Commit commit = currentBranch.addCommit(
-                message
-                , newCommitNumber
-                , currentCommitNumber
-                , addedFiles
-                , removedFiles);
-        checkoutCommit(commit.getCommitNumber());
-        return commit;
-    }
-
-    public void checkoutCommit(String commitNumber) {
-        Commit commit = getCommitByNumber(commitNumber);
-
-        if (commit != null) {
-            currentCommitNumber = commitNumber;
-            currentBranchName = commit.getBranchName();
-            return;
+    public void checkoutCommit(long commitNumber) throws IOException {
+        for (String file : trackedFiles) {
+            FileUtils.deleteQuietly(new File(workingDirectory, file));
         }
-        throw new RuntimeException(
-                String.format("No commit %s found", commitNumber)
-        );
-    }
-
-    public void checkoutBranch(String branchName) {
-        Branch branch = getBranchByName(branchName);
-
-        if (branch != null) {
-            currentCommitNumber = branch.getCommits().get(0).getCommitNumber();
-            currentBranchName = branch.getName();
-            return;
+        Snapshot snapshot = SnapshotReader.readSnapshot(getSnapshotFile(commitNumber));
+        trackedFiles.clear();
+        trackedFiles.addAll(snapshot.filenameSet());
+        for (String file : trackedFiles) {
+            String hash = snapshot.getFileHash(file);
+            FileUtils.copyFile(new File(getDataDirectory(), hash), new File(workingDirectory, file));
         }
-
-        throw new RuntimeException(
-                String.format("No branch %s found", branchName)
-        );
     }
 
-    public Branch getBranchByName(String branchName) {
-        return getAllBranches().get(branchName);
-    }
+    public void merge(long srcCommitNumber
+            , long dstCommitNumber
+            , long baseCommitNumber
+            , long nextCommitNumber) throws MergeFailedException {
+        Snapshot srcSnapshot = getSnapshotByCommitNumber(srcCommitNumber);
+        Snapshot dstSnapshot = getSnapshotByCommitNumber(dstCommitNumber);
+        Snapshot baseSnapshot = getSnapshotByCommitNumber(baseCommitNumber);
 
-    public Commit getCommitByNumber(String commitNumber) {
-        return getAllCommits().get(commitNumber);
-    }
+        Set<String> allFiles = new HashSet<>();
+        allFiles.addAll(srcSnapshot.filenameSet());
+        allFiles.addAll(dstSnapshot.filenameSet());
+        allFiles.addAll(baseSnapshot.filenameSet());
 
-    private Map<String, Commit> getAllCommits() {
-        if (allCommits == null) {
-            allCommits = new HashMap<>();
-            for (Branch branch : branches) {
-                for (Commit commit : branch.getCommits()) {
-                    allCommits.put(commit.getCommitNumber(), commit);
+        Snapshot result = new Snapshot();
+        for (String filename : allFiles) {
+            boolean isChangedInSrc = !Objects.equals(
+                    srcSnapshot.getFileHash(filename)
+                    , baseSnapshot.getFileHash(filename)
+            );
+            boolean isChangedInDst = !Objects.equals(
+                    dstSnapshot.getFileHash(filename)
+                    , baseSnapshot.getFileHash(filename)
+            );
+            boolean changesAreDifferent = !Objects.equals(
+                    srcSnapshot.getFileHash(filename)
+                    , dstSnapshot.getFileHash(filename)
+            );
+
+            boolean isConflict = isChangedInSrc && isChangedInDst && changesAreDifferent;
+
+            if (isConflict) {
+                throw new MergeFailedException(String.format("Merge conflict in file%s. Aborting!", filename));
+            }
+
+            if (isChangedInSrc) {
+                if (srcSnapshot.contains(filename)) {
+                    result.addFile(filename, srcSnapshot.getFileHash(filename));
                 }
+                continue;
+            }
+
+            if (dstSnapshot.contains(filename)) {
+                result.addFile(filename, dstSnapshot.getFileHash(filename));
             }
         }
-        return allCommits;
+        SnapshotWriter.writeSnapshot(result, getSnapshotFile(nextCommitNumber));
     }
 
-
-    private Map<String, Branch> getAllBranches() {
-        if (allBranches == null) {
-            allBranches = new HashMap<>();
-            for (Branch branch : branches) {
-                allBranches.put(branch.getName(), branch);
+    private void processFiles(String[] filenames, Consumer<File> consumer) {
+        for (String filename : filenames) {
+            File file = new File(filename);
+            if (file.isDirectory()) {
+                FileSystem.listExternalFiles(file).forEach(consumer);
+            } else {
+                consumer.accept(file);
             }
         }
-        return allBranches;
+    }
+
+    private void addFile(File file) {
+        String relativePath = FileSystem.getRelativePath(file, workingDirectory);
+        trackedFiles.add(relativePath);
+    }
+
+    private void removeFile(File file) {
+        String relativePath = FileSystem.getRelativePath(file, workingDirectory);
+        trackedFiles.remove(relativePath);
+        FileUtils.deleteQuietly(file);
+    }
+
+    private File getVcsFolder() {
+        return new File(workingDirectory, VcsCore.VCS_FOLDER_NAME);
+    }
+
+    private File getSnapshotFile(long commitNumber) {
+        return new File(getVcsFolder(), String.valueOf(commitNumber) + ".json");
+    }
+
+    private File getDataDirectory() {
+        return new File(getVcsFolder(), "data");
     }
 }

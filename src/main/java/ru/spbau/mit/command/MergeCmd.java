@@ -1,6 +1,6 @@
 package ru.spbau.mit.command;
 
-import ru.spbau.mit.environment.Environment;
+import ru.spbau.mit.core.VcsCore;
 import ru.spbau.mit.model.FileInfo;
 import ru.spbau.mit.model.Commit;
 import ru.spbau.mit.exceptions.CommandFailException;
@@ -13,8 +13,8 @@ import java.util.Map;
  */
 public class MergeCmd implements Command {
     @Override
-    public String execute(Environment environment, String[] args) {
-        if (environment.getVcsCore().isInit()) {
+    public String execute(VcsCore vcs, String[] args) {
+        if (vcs.getVcsCore().isInit()) {
             throw new CommandFailException("Repository has not been init");
         }
 
@@ -25,35 +25,35 @@ public class MergeCmd implements Command {
         String srcBranchName = args[0];
         String dstBranchName = args[1];
 
-        String lastCommitNumberInSrc = environment
+        String lastCommitNumberInSrc = vcs
                 .getRepository()
                 .getBranchByName(srcBranchName)
                 .getCommits()
-                .get(environment
+                .get(vcs
                         .getRepository()
                         .getBranchByName(srcBranchName)
                         .getCommits()
                         .size() - 1)
                 .getCommitNumber();
 
-        String lastCommitNumberInDst = environment
+        String lastCommitNumberInDst = vcs
                 .getRepository()
                 .getBranchByName(dstBranchName)
                 .getCommits()
-                .get(environment
+                .get(vcs
                         .getRepository()
                         .getBranchByName(dstBranchName)
                         .getCommits()
                         .size() - 1)
                 .getCommitNumber();
 
-        List<Commit> pathFromSrc = environment
+        List<Commit> pathFromSrc = vcs
                 .getVcsCore()
-                .getPathFromCommit(environment.getRepository(), lastCommitNumberInSrc);
+                .getPathFromCommit(vcs.getRepository(), lastCommitNumberInSrc);
 
-        List<Commit> pathFromDst = environment
+        List<Commit> pathFromDst = vcs
                 .getVcsCore()
-                .getPathFromCommit(environment.getRepository(), lastCommitNumberInDst);
+                .getPathFromCommit(vcs.getRepository(), lastCommitNumberInDst);
 
         int i = pathFromSrc.size() - 1;
         int j = pathFromDst.size() - 1;
@@ -70,12 +70,12 @@ public class MergeCmd implements Command {
             ancestor = pathFromSrc.get(i + 1);
         }
 
-        environment.getFileUtils().clearProject();
+        vcs.getFileUtils().clearProject();
 
-        Map<FileInfo, Commit> changes = environment.getVcsCore()
-                .collectChanges(environment.getRepository(), ancestor.getCommitNumber());
+        Map<FileInfo, Commit> changes = vcs.getVcsCore()
+                .collectChanges(vcs.getRepository(), ancestor.getCommitNumber());
 
-        environment.getVcsCore().copyFromCommitDirs(changes);
+        vcs.getVcsCore().copyFromCommitDirs(changes);
 
         return String.format("Merged branch %s into %s", srcBranchName, dstBranchName);
 

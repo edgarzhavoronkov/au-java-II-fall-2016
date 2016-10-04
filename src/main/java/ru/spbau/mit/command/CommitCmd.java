@@ -1,6 +1,6 @@
 package ru.spbau.mit.command;
 
-import ru.spbau.mit.environment.Environment;
+import ru.spbau.mit.core.VcsCore;
 import ru.spbau.mit.model.FileInfo;
 import ru.spbau.mit.model.Commit;
 import ru.spbau.mit.exceptions.CommandFailException;
@@ -17,8 +17,8 @@ import java.util.Map;
  */
 public class CommitCmd implements Command {
     @Override
-    public String execute(Environment environment, String[] args) {
-        if (!environment.getVcsCore().isInit()) {
+    public String execute(VcsCore vcs, String[] args) {
+        if (!vcs.getVcsCore().isInit()) {
             throw new CommandFailException("Repository has not been init");
         }
 
@@ -29,12 +29,12 @@ public class CommitCmd implements Command {
         if (args[0].equals("-m")) {
             String commitMessage = args[1];
 
-            Map<FileInfo, Commit> changes = environment.getVcsCore().collectChanges(environment.getRepository());
+            Map<FileInfo, Commit> changes = vcs.getVcsCore().collectChanges(vcs.getRepository());
 
             List<FileInfo> modifiedFiles = new ArrayList<>();
             List<FileInfo> removedFiles = new ArrayList<>();
 
-            Path currentDirectory = environment.getFileUtils().getCurrentDirectory();
+            Path currentDirectory = vcs.getFileUtils().getCurrentDirectory();
 
             for (FileInfo fileInfo : changes.keySet()) {
                 File file = new File(currentDirectory.toFile(), fileInfo.getPath());
@@ -47,7 +47,7 @@ public class CommitCmd implements Command {
                 }
             }
 
-            List<String> addedFiles = environment.getVcsCore().getAddedFiles();
+            List<String> addedFiles = vcs.getVcsCore().getAddedFiles();
             for (String filename : addedFiles) {
                 File file = new File(currentDirectory.toFile(), filename);
                 if (file.exists()) {
@@ -56,10 +56,10 @@ public class CommitCmd implements Command {
                 }
             }
 
-            Commit commit = environment.getRepository().addNewCommit(commitMessage, modifiedFiles, removedFiles);
+            Commit commit = vcs.getRepository().addNewCommit(commitMessage, modifiedFiles, removedFiles);
 
-            environment.getVcsCore().copyFilesToCommitDirectory(commit);
-            environment.getVcsCore().clearStagedFiles();
+            vcs.getVcsCore().copyFilesToCommitDirectory(commit);
+            vcs.getVcsCore().clearStagedFiles();
 
             return String.format("Commit %s created", commit.getCommitNumber());
         } else {

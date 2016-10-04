@@ -1,12 +1,11 @@
 package ru.spbau.mit.command;
 
-import ru.spbau.mit.environment.Environment;
+import ru.spbau.mit.core.VcsCore;
 import ru.spbau.mit.exceptions.CommandFailException;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -14,8 +13,8 @@ import java.util.List;
  */
 public class AddCmd implements Command {
     @Override
-    public String execute(Environment environment, String[] args) {
-        if (!environment.getVcsCore().isInit()) {
+    public String execute(VcsCore vcs, String[] args) {
+        if (!vcs.getVcsCore().isInit()) {
             throw new CommandFailException("Repository has not been init");
         }
 
@@ -23,7 +22,7 @@ public class AddCmd implements Command {
             throw new CommandFailException("I have no files to add");
         }
 
-        Path currentDirectory = environment.getFileUtils().getCurrentDirectory();
+        Path currentDirectory = vcs.getFileUtils().getCurrentDirectory();
 
         for (String arg : args) {
             if (!new File(currentDirectory.toString(), arg).exists()) {
@@ -32,7 +31,7 @@ public class AddCmd implements Command {
         }
 
         List<String> addedFileNames = Arrays.asList(args);
-        environment.getVcsCore().addToStagedFiles(addedFileNames);
+        vcs.getVcsCore().addToStagedFiles(addedFileNames);
 
         return String.format("Added %d file(s)", addedFileNames.size());
     }

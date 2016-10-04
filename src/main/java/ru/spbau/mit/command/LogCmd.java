@@ -1,6 +1,6 @@
 package ru.spbau.mit.command;
 
-import ru.spbau.mit.environment.Environment;
+import ru.spbau.mit.core.VcsCore;
 import ru.spbau.mit.model.Branch;
 import ru.spbau.mit.model.Commit;
 import ru.spbau.mit.exceptions.CommandFailException;
@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
  */
 public class LogCmd implements Command {
     @Override
-    public String execute(Environment environment, String[] args) {
-        if (environment.getVcsCore().isInit()) {
+    public String execute(VcsCore vcs, String[] args) {
+        if (vcs.getVcsCore().isInit()) {
             throw new CommandFailException("Repository has not been init");
         }
 
@@ -22,7 +22,7 @@ public class LogCmd implements Command {
             throw new CommandFailException("Log does not need any arguments");
         }
 
-        Branch currentBranch = environment.getRepository().getBranchByName(environment.getRepository().getCurrentBranchName());
+        Branch currentBranch = vcs.getRepository().getBranchByName(vcs.getRepository().getCurrentBranchName());
 
         StringBuilder result = new StringBuilder();
         List<Commit> sorted = currentBranch.getCommits()

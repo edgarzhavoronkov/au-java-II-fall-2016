@@ -13,6 +13,5 @@ import java.io.Serializable;
  */
 @Data
 public class FileInfo implements Serializable {
-    private final String path;
-    private final long lastUpdated;
+
 }

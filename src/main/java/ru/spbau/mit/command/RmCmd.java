@@ -5,7 +5,7 @@ import ru.spbau.mit.core.VcsCore;
 /**
  * Created by Эдгар on 02.10.2016.
  */
-public class ResetCmd implements Command {
+public class RmCmd implements Command {
     @Override
     public String execute(VcsCore vcs, String[] args) {
         return null;

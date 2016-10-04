@@ -1,6 +1,6 @@
 package ru.spbau.mit.command;
 
-import ru.spbau.mit.environment.Environment;
+import ru.spbau.mit.core.VcsCore;
 import ru.spbau.mit.exceptions.CommandFailException;
 
 import java.io.File;
@@ -10,17 +10,17 @@ import java.io.File;
  */
 public class InitCmd implements Command {
     @Override
-    public String execute(Environment environment, String[] args) {
+    public String execute(VcsCore vcs, String[] args) {
         if (args.length != 0) {
             throw new CommandFailException("Init does not need any arguments");
         }
 
-        File currentRepositoryDir = environment.getFileUtils().getCurrentDirectory().toFile();
+        File currentRepositoryDir = vcs.getFileUtils().getCurrentDirectory().toFile();
         if (currentRepositoryDir.exists()) {
             throw new CommandFailException("You are trying to init existing repository");
         }
 
-        environment.getFileUtils().mkDir(currentRepositoryDir);
+        vcs.getFileUtils().mkDir(currentRepositoryDir);
         return "Init new repository";
     }
 }

@@ -1,7 +1,6 @@
 package ru.spbau.mit;
 
-import ru.spbau.mit.environment.EnvironmentBuilder;
-import ru.spbau.mit.environment.Environment;
+import ru.spbau.mit.core.VcsCore;
 import ru.spbau.mit.runner.ConsoleRunner;
 import ru.spbau.mit.runner.Runner;
 
@@ -14,8 +13,8 @@ import ru.spbau.mit.runner.Runner;
  */
 public class Main {
     public static void main(String[] args) {
-        Environment environment = EnvironmentBuilder.init();
+        VcsCore core = VcsCore.getInstance();
         Runner runner = new ConsoleRunner();
-        runner.run(args, environment);
+        runner.run(args, core);
     }
 }
