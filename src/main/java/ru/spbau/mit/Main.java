@@ -1,6 +1,5 @@
 package ru.spbau.mit;
 
-import ru.spbau.mit.core.VcsCore;
 import ru.spbau.mit.runner.ConsoleRunner;
 import ru.spbau.mit.runner.Runner;
 
@@ -13,8 +12,8 @@ import ru.spbau.mit.runner.Runner;
  */
 public class Main {
     public static void main(String[] args) {
-        VcsCore core = VcsCore.getInstance();
+        VCS vcs = VCS.getInstance();
         Runner runner = new ConsoleRunner();
-        runner.run(args, core);
+        runner.run(args, vcs);
     }
 }

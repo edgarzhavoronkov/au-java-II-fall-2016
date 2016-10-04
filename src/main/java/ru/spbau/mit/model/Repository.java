@@ -2,7 +2,7 @@ package ru.spbau.mit.model;
 
 import lombok.Getter;
 import org.apache.commons.io.FileUtils;
-import ru.spbau.mit.core.VcsCore;
+import ru.spbau.mit.model.core.VcsCore;
 import ru.spbau.mit.exceptions.MergeFailedException;
 import ru.spbau.mit.io.SnapshotReader;
 import ru.spbau.mit.io.SnapshotWriter;

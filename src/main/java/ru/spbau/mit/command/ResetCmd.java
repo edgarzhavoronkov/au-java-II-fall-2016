@@ -1,6 +1,6 @@
 package ru.spbau.mit.command;
 
-import ru.spbau.mit.core.VcsCore;
+import ru.spbau.mit.model.core.VcsCore;
 
 /**
  * Created by Эдгар on 02.10.2016.

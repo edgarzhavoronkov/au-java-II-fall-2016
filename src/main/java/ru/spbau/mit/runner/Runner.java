@@ -1,6 +1,6 @@
 package ru.spbau.mit.runner;
 
-import ru.spbau.mit.core.VcsCore;
+import ru.spbau.mit.VCS;
 
 /**
  * Created by Эдгар on 30.09.2016.
@@ -8,5 +8,5 @@ import ru.spbau.mit.core.VcsCore;
  * See {@link ConsoleRunner} for sample implementation
  */
 public interface Runner {
-    void run(String[] args, VcsCore vcs);
+    void run(String[] args, VCS vcs);
 }

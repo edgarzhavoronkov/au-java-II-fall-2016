@@ -1,6 +1,6 @@
 package ru.spbau.mit.command;
 
-import ru.spbau.mit.core.VcsCore;
+import ru.spbau.mit.model.core.VcsCore;
 import ru.spbau.mit.exceptions.CommandFailException;
 
 import java.io.File;

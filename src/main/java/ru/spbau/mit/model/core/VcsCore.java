@@ -1,4 +1,4 @@
-package ru.spbau.mit.core;
+package ru.spbau.mit.model.core;
 
 import lombok.Getter;
 import ru.spbau.mit.exceptions.CoreException;

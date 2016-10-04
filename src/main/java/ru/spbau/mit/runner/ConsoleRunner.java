@@ -1,8 +1,8 @@
 package ru.spbau.mit.runner;
 
+import ru.spbau.mit.VCS;
 import ru.spbau.mit.command.Command;
 import ru.spbau.mit.command.CommandProvider;
-import ru.spbau.mit.core.VcsCore;
 import ru.spbau.mit.exceptions.CommandFailException;
 
 /**
@@ -12,7 +12,7 @@ import ru.spbau.mit.exceptions.CommandFailException;
  */
 public class ConsoleRunner implements Runner {
     @Override
-    public void run(String[] args, VcsCore vcs) {
+    public void run(String[] args, VCS vcs) {
         if (args.length == 0) {
             System.out.println("No command specified!");
             System.exit(-1);

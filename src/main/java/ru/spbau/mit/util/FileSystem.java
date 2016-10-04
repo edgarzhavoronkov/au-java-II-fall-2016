@@ -11,7 +11,6 @@ import java.util.Collections;
  * so i can easily ask whether repository exists etc.
  */
 public class FileSystem {
-
     public static String getRelativePath(File file, String workingDirectory) {
         return "";
     }
