@@ -1,31 +1,37 @@
 package ru.spbau.mit.command;
 
-import ru.spbau.mit.model.core.VcsCore;
-import ru.spbau.mit.model.Branch;
 import ru.spbau.mit.exceptions.CommandFailException;
+import ru.spbau.mit.exceptions.CoreException;
+import ru.spbau.mit.model.core.VcsCore;
 
 /**
  * Created by Эдгар on 25.09.2016.
  */
 public class BranchCmd implements Command {
     @Override
-    public String execute(VcsCore vcs, String[] args) {
-        if (!vcs.getVcsCore().isInit()) {
-            throw new CommandFailException("Repository has not been init");
-        }
-
+    public String execute(VcsCore core, String[] args) {
         if (args.length != 2) {
-            throw new CommandFailException("Wrong arguments! Use -c and a branch name to create branch with provided name or -d and branch name to remove branch with given name");
+            throw new CommandFailException("Wrong number of arguments!");
         }
-
-        if (args[0].equals("-c")) {
-            Branch branch = vcs.getRepository().addNewBranch(args[1]);
-            return String.format("Branch %s was successfully created", branch.getName());
-        } else if (args[0].equals("-d")) {
-            Branch branch = vcs.getRepository().removeBranch(args[1]);
-            return String.format("Branch %s was successfully removed", branch.getName());
-        } else {
-            throw new CommandFailException("I can't figure out what do you want me to do =(");
+        switch (args[0]) {
+            case "-c" :
+                try {
+                    core.createBranch(args[1]);
+                    core.checkoutBranch(args[1]);
+                    return String.format("Created branch%s", args[1]);
+                } catch (CoreException e) {
+                    throw new CommandFailException(e);
+                }
+            case "-d" :
+                try {
+                    core.removeBranch(args[1]);
+                    return String.format("Branch %s was removed!", args[1]);
+                } catch (CoreException e) {
+                    throw new CommandFailException(e);
+                }
+            default :
+                throw new CommandFailException("Wrong key! Usage: `branch -c $branch_name` to create " +
+                        "branch or `branch -d $branch_name` to delete branch");
         }
     }
 }

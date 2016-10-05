@@ -64,7 +64,7 @@ public class Repository {
         return snapshot;
     }
 
-    public Snapshot getSnapshotByCommitNumber(long commitNumber) {
+    public Snapshot getSnapshotByCommitNumber(long commitNumber) throws IOException {
         File snapshotFile = getSnapshotFile(commitNumber);
         return SnapshotReader.readSnapshot(snapshotFile);
     }
@@ -102,9 +102,17 @@ public class Repository {
             , long dstCommitNumber
             , long baseCommitNumber
             , long nextCommitNumber) throws MergeFailedException {
-        Snapshot srcSnapshot = getSnapshotByCommitNumber(srcCommitNumber);
-        Snapshot dstSnapshot = getSnapshotByCommitNumber(dstCommitNumber);
-        Snapshot baseSnapshot = getSnapshotByCommitNumber(baseCommitNumber);
+        Snapshot srcSnapshot;
+        Snapshot dstSnapshot;
+        Snapshot baseSnapshot;
+        try {
+            srcSnapshot = getSnapshotByCommitNumber(srcCommitNumber);
+            dstSnapshot = getSnapshotByCommitNumber(dstCommitNumber);
+            baseSnapshot = getSnapshotByCommitNumber(baseCommitNumber);
+        } catch (IOException e) {
+            throw new MergeFailedException("Failed to read snapshot from disk!");
+        }
+
 
         Set<String> allFiles = new HashSet<>();
         allFiles.addAll(srcSnapshot.filenameSet());
@@ -143,7 +151,11 @@ public class Repository {
                 result.addFile(filename, dstSnapshot.getFileHash(filename));
             }
         }
-        SnapshotWriter.writeSnapshot(result, getSnapshotFile(nextCommitNumber));
+        try {
+            SnapshotWriter.writeSnapshot(result, getSnapshotFile(nextCommitNumber));
+        } catch (IOException e) {
+            throw new MergeFailedException("Failed to write result of a merge to disk");
+        }
     }
 
     private void processFiles(String[] filenames, Consumer<File> consumer) {

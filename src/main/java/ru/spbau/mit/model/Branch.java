@@ -1,6 +1,7 @@
 package ru.spbau.mit.model;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.io.Serializable;
 

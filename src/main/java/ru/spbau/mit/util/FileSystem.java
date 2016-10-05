@@ -1,25 +1,51 @@
 package ru.spbau.mit.util;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.AbstractFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
+import ru.spbau.mit.model.core.VcsCore;
+
+import javax.xml.bind.DatatypeConverter;
 import java.io.File;
-import java.nio.file.Path;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Created by Эдгар on 01.10.2016.
- * Wrapper around Apache FileSystem
- * so i can easily ask whether repository exists etc.
+ * Small class for getting sha-1 hashes from files, taking relative paths, etc.
  */
 public class FileSystem {
     public static String getRelativePath(File file, String workingDirectory) {
-        return "";
+        return file.getAbsolutePath().substring(workingDirectory.length() + 1);
     }
 
     public static String getNewHash(File file) {
-        return "";
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            try (InputStream in = new FileInputStream(file)) {
+                byte[] buffer = new byte[8192];
+                int n = in.read(buffer);
+                while (n != -1) {
+                    digest.update(buffer, 0, n);
+                    n = in.read(buffer);
+                }
+            }
+            return DatatypeConverter.printHexBinary(digest.digest());
+        } catch (NoSuchAlgorithmException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static Collection<File> listExternalFiles(File file) {
-        return Collections.EMPTY_LIST;
+    public static Collection<File> listExternalFiles(File dir) {
+        return FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, new AbstractFileFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return !VcsCore.VCS_FOLDER_NAME.equals(name);
+            }
+        });
     }
 }

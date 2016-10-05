@@ -8,4 +8,8 @@ public class CommandFailException extends RuntimeException {
     public CommandFailException(String message) {
         super(message);
     }
+
+    public CommandFailException(Exception cause) {
+        super(cause);
+    }
 }

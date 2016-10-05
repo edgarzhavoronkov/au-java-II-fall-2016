@@ -2,10 +2,12 @@ package ru.spbau.mit.model.core;
 
 import lombok.Getter;
 import ru.spbau.mit.exceptions.CoreException;
+import ru.spbau.mit.exceptions.MergeFailedException;
 import ru.spbau.mit.model.Branch;
 import ru.spbau.mit.model.Commit;
 import ru.spbau.mit.model.Repository;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -84,7 +86,11 @@ public class VcsCore {
             currentCommitNumber = commitNumber;
             //maybe set current branch's  head commit number to new number?
             currentBranch = null;
-            repository.checkoutCommit(currentCommitNumber);
+            try {
+                repository.checkoutCommit(currentCommitNumber);
+            } catch (IOException e) {
+                throw new CoreException("Failed to checkout due to I/O failure!");
+            }
         }
         throw new CoreException(String.format("Failed to checkout non-existing revision %d", commitNumber));
     }
@@ -94,7 +100,11 @@ public class VcsCore {
         if (branch != null) {
             currentBranch = branch;
             currentCommitNumber = branch.getHeadCommitNumber();
-            repository.checkoutCommit(currentCommitNumber);
+            try {
+                repository.checkoutCommit(currentCommitNumber);
+            } catch (IOException e) {
+                throw new CoreException("Failed to checkout due to I/O failure!");
+            }
         }
         throw new CoreException(String.format("Failed to checkout non-existing branch %s", branchName));
     }
@@ -104,7 +114,11 @@ public class VcsCore {
             throw new CoreException("No branch to commit into");
         }
         long newCommitNumber = addCommit(message);
-        repository.saveCommit(newCommitNumber);
+        try {
+            repository.saveCommit(newCommitNumber);
+        } catch (IOException e) {
+            throw new CoreException("Failed to commit due to I/O failure!");
+        }
     }
 
     public Commit getCurrentCommit() {
@@ -136,9 +150,13 @@ public class VcsCore {
         if (srcHeadNumber <= baseCommitNumber) {
             throw new CoreException("Merge failed. Everything is up-to-date");
         }
-        repository.merge(srcHeadNumber, currentCommitNumber, srcCommit.getNumber(), nextCommitNumber);
-        String mergeMessage = String.format("Merged branch %s into %s", src.getName(), currentBranch.getName());
-        addCommit(mergeMessage);
+        try {
+            repository.merge(srcHeadNumber, currentCommitNumber, srcCommit.getNumber(), nextCommitNumber);
+            String mergeMessage = String.format("Merged branch %s into %s", src.getName(), currentBranch.getName());
+            addCommit(mergeMessage);
+        } catch (MergeFailedException e ) {
+            throw new CoreException("Failed to merge due to I/O failure");
+        }
     }
 
     private long addCommit(String message) {

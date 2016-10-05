@@ -1,40 +1,29 @@
 package ru.spbau.mit.command;
 
-import ru.spbau.mit.model.core.VcsCore;
-import ru.spbau.mit.model.Branch;
-import ru.spbau.mit.model.Commit;
 import ru.spbau.mit.exceptions.CommandFailException;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import ru.spbau.mit.model.Commit;
+import ru.spbau.mit.model.core.VcsCore;
 
 /**
  * Created by Эдгар on 25.09.2016.
  */
 public class LogCmd implements Command {
     @Override
-    public String execute(VcsCore vcs, String[] args) {
-        if (vcs.getVcsCore().isInit()) {
-            throw new CommandFailException("Repository has not been init");
-        }
-
+    public String execute(VcsCore core, String[] args) {
         if (args.length != 0) {
-            throw new CommandFailException("Log does not need any arguments");
+            throw new CommandFailException("Log command does not take any arguments");
         }
-
-        Branch currentBranch = vcs.getRepository().getBranchByName(vcs.getRepository().getCurrentBranchName());
 
         StringBuilder result = new StringBuilder();
-        List<Commit> sorted = currentBranch.getCommits()
-                .stream()
-                .sorted((c1, c2) -> c1.getCommitNumber().compareTo(c2.getCommitNumber()))
-                .collect(Collectors.toList());
-        for (Commit commit : sorted) {
-            result.append(commit.getCommitNumber())
-                    .append(": ")
-                    .append(commit.getMessage())
-                    .append("\n");
+        Commit commit = core.getCurrentCommit();
+        while (commit != null && commit.getNumber() > 0) {
+            result.append(commit.getNumber());
+            result.append(" : ");
+            result.append(commit.getMessage());
+            result.append("\n");
+            commit = core.getCommitByNumber(commit.getParentCommitNumber());
         }
+
         return result.toString();
     }
 }

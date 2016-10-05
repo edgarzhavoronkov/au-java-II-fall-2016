@@ -15,7 +15,7 @@ public class CommandProvider {
         commands.put("branch", new BranchCmd());
         commands.put("checkout", new CheckoutCmd());
         commands.put("commit", new CommitCmd());
-        commands.put("init", new InitCmd());
+        commands.put("clean", new CleanCmd());
         commands.put("log", new LogCmd());
         commands.put("merge", new MergeCmd());
         commands.put("reset", new ResetCmd());
