@@ -10,8 +10,15 @@ import java.io.PrintWriter;
 
 /**
  * Created by Эдгар on 04.10.2016.
+ * Small class for serilizing {@link Snapshot} to disk(to JSON)
  */
 public class SnapshotWriter {
+    /**
+     * writes snapshot to a snapshotFile
+     * @param snapshot {@link Snapshot} to serialize
+     * @param snapshotFile {@link File} to which snapshot is written
+     * @throws IOException
+     */
     public static void writeSnapshot(Snapshot snapshot, File snapshotFile) throws IOException {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         snapshotFile.getParentFile().mkdirs();

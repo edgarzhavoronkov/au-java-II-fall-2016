@@ -11,8 +11,14 @@ import java.io.PrintWriter;
 
 /**
  * Created by edgar on 05.10.16.
+ * Small class for serializing {@link VcsCore} to JSON
  */
 public class VcsWriter {
+    /**
+     * reads {@link VcsCore} from JSON
+     * @param file {@link File} to read from
+     * @throws IOException
+     */
     public static void write(VcsCore core, File file) throws IOException {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         file.getParentFile().mkdirs();

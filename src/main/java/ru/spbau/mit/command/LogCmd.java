@@ -6,8 +6,17 @@ import ru.spbau.mit.model.core.VcsCore;
 
 /**
  * Created by Эдгар on 25.09.2016.
+ * Implementation of a {@link Command} interface for Log
  */
 public class LogCmd implements Command {
+    /**
+     * Overridden execute method for Log
+     * @param core {@link VcsCore} which does all the job
+     * @param args Array of {@link String}. Must be empty
+     * @return Big string with info about all {@link Commit}s
+     * in current {@link ru.spbau.mit.model.Branch}
+     * @throws CommandFailException if something went wrong
+     */
     @Override
     public String execute(VcsCore core, String[] args) {
         if (args.length != 0) {

@@ -12,8 +12,16 @@ import java.util.stream.Collectors;
 
 /**
  * Created by Эдгар on 02.10.2016.
+ * Implementation of a {@link Command} interface for Reset
  */
 public class StatusCmd implements Command {
+    /**
+     * Overridden execute method for Status
+     * @param core {@link VcsCore} which does all the job
+     * @param args Array of {@link String} with arguments. Must be empty
+     * @return message with information about added, removed, modified and untracked files
+     * @throws CommandFailException if something went wrong
+     */
     @Override
     public String execute(VcsCore core, String[] args) {
         if (args.length != 0) {

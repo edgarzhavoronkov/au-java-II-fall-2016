@@ -6,8 +6,16 @@ import ru.spbau.mit.model.core.VcsCore;
 
 /**
  * Created by Эдгар on 25.09.2016.
+ * Implementation of {@link Command} interface for Branch command
  */
 public class BranchCmd implements Command {
+    /**
+     * Overridden execute method for Branch
+     * @param core {@link VcsCore} which does all the job
+     * @param args Array of {@link String} with arguments
+     * @return message whether branch is successfully created or deleted
+     * @throws CommandFailException if something went wrong
+     */
     @Override
     public String execute(VcsCore core, String[] args) {
         if (args.length != 2) {

@@ -18,24 +18,41 @@ import java.util.function.Consumer;
 
 /**
  * Created by Эдгар on 25.09.2016.
+ * Abstraction for repository in VCS
+ * knows about current working directory and tracked files
  */
 public class Repository {
     private final String workingDirectory;
     @Getter
     private final Set<String> trackedFiles = new HashSet<>();
 
+    /**
+     * Constructor from working directory
+     * @param workingDirectory
+     */
     public Repository(String workingDirectory) {
         this.workingDirectory = workingDirectory;
     }
 
+    /**
+     * Adds filenames to index
+     * @param filenames Array of {@link String} with filenames to add
+     */
     public void addFiles(String[] filenames) {
         processFiles(filenames, this::addFile);
     }
 
+    /**
+     * Removes filenames from index
+     * @param filenames Array of {@link String} with filenames to remove
+     */
     public void removeFiles(String[] filenames) {
         processFiles(filenames, this::removeFile);
     }
 
+    /**
+     * Cleans the repository from untracked files
+     */
     public void clean() {
         Snapshot snapshot = getCurrentSnapshot();
         snapshot.filenameSet()
@@ -44,6 +61,12 @@ public class Repository {
                 .forEach(file -> FileUtils.deleteQuietly(new File(workingDirectory, file)));
     }
 
+    /**
+     * Removes file from the index in particular {@link Commit}
+     * @param filename file to remove from index
+     * @param commitNumber commit number when to reset file
+     * @throws IOException if I/O problem occured
+     */
     public void resetFile(String filename, long commitNumber) throws IOException {
         Snapshot snapshot = getSnapshotByCommitNumber(commitNumber);
         if (!snapshot.contains(filename)) {
@@ -54,6 +77,10 @@ public class Repository {
         }
     }
 
+    /**
+     * Get current state of repository. See {@link Snapshot}
+     * @return current {@link Snapshot} of repo
+     */
     public Snapshot getCurrentSnapshot() {
         Collection<File> allFiles = FileSystem.listExternalFiles(new File(workingDirectory));
         Snapshot snapshot = new Snapshot();
@@ -64,11 +91,22 @@ public class Repository {
         return snapshot;
     }
 
+    /**
+     * Get state of repository by the commit number
+     * @param commitNumber moment to get the {@link Snapshot}
+     * @return specified {@link Snapshot} of repo
+     * @throws IOException if deserialization of {@link Snapshot} failed
+     */
     public Snapshot getSnapshotByCommitNumber(long commitNumber) throws IOException {
         File snapshotFile = getSnapshotFile(commitNumber);
         return SnapshotReader.readSnapshot(snapshotFile);
     }
 
+    /**
+     * Serializes commit to disk as a {@link Snapshot}
+     * @param commitNumber commit to dump
+     * @throws IOException if serialization failed
+     */
     public void saveCommit(long commitNumber) throws IOException {
         Snapshot snapshot = new Snapshot();
         for (String filename : trackedFiles) {
@@ -85,6 +123,12 @@ public class Repository {
         SnapshotWriter.writeSnapshot(snapshot, getSnapshotFile(commitNumber));
     }
 
+    /**
+     * Checkouts commit with given number. Does all the job with filesystem
+     * Version in {@link VcsCore} wraps this one
+     * @param commitNumber commit to checkout
+     * @throws IOException if I/O problems occured
+     */
     public void checkoutCommit(long commitNumber) throws IOException {
         for (String file : trackedFiles) {
             FileUtils.deleteQuietly(new File(workingDirectory, file));
@@ -98,6 +142,17 @@ public class Repository {
         }
     }
 
+    /**
+     * Actual three-way merging algorithm
+     * Gets all the changes in src , dst and
+     * base commits and checks if there is conflicts,
+     * by comparing SHA-1 hashes of corresponding files
+     * @param srcCommitNumber first commit
+     * @param dstCommitNumber second commit
+     * @param baseCommitNumber their common ancestor
+     * @param nextCommitNumber merge-commit number
+     * @throws MergeFailedException if there is a conflict
+     */
     public void merge(long srcCommitNumber
             , long dstCommitNumber
             , long baseCommitNumber

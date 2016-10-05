@@ -5,6 +5,7 @@ import lombok.Data;
 /**
  * Created by Эдгар on 25.09.2016.
  * Abstraction for commit in VCS
+ * Knows its' number, message and number of parent commit
  */
 @Data
 public class Commit  {

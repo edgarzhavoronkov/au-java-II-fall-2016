@@ -12,6 +12,9 @@ import java.util.*;
 
 /**
  * Created by Эдгар on 01.10.2016.
+ * Core class for VCS. Manipulates with filesystem and
+ * provides API for {@link ru.spbau.mit.command.Command}
+ * interface implementors
  */
 public class VcsCore {
     public static final String VCS_FOLDER_NAME = ".repo";
@@ -61,10 +64,19 @@ public class VcsCore {
         branches.add(currentBranch);
     }
 
+    /**
+     * Instance getter for {@link VcsCore}
+     * @return new instance
+     */
     public static VcsCore getInstance() {
         return new VcsCore();
     }
 
+    /**
+     * Creates new branch with given name
+     * @param name branch name
+     * @throws CoreException if branch with given name is already present
+     */
     public void createBranch(String name) throws CoreException {
         Branch branch = new Branch(name, currentCommitNumber);
         if (!branches.contains(branch)) {
@@ -73,6 +85,11 @@ public class VcsCore {
         throw new CoreException(String.format("Branch %s already exists", name));
     }
 
+    /**
+     * Removes branch with given name
+     * @param name branch name
+     * @throws CoreException if branch with given name was not found
+     */
     public void removeBranch(String name) throws CoreException {
         Branch branch = getBranchByName(name);
         if (branch != null) {
@@ -81,10 +98,15 @@ public class VcsCore {
         throw new CoreException(String.format("Failed to remove non-existent branch %s", name));
     }
 
+    /**
+     * Checkouts commit by number
+     * @param commitNumber number of commit to checkout
+     * @throws CoreException if I/O failure or if no such commit is present
+     */
     public void checkoutCommit(long commitNumber) throws CoreException {
         if (commits.get(commitNumber) != null) {
             currentCommitNumber = commitNumber;
-            //maybe set current branch's  head commit number to new number?
+            //common use case is to create a new branch right after checkout to commit
             currentBranch = null;
             try {
                 repository.checkoutCommit(currentCommitNumber);
@@ -95,6 +117,11 @@ public class VcsCore {
         throw new CoreException(String.format("Failed to checkout non-existing revision %d", commitNumber));
     }
 
+    /**
+     * Checkouts branch by it's name
+     * @param branchName name of branch to checkout
+     * @throws CoreException if I/O failed or if no branch with given name is present
+     */
     public void checkoutBranch(String branchName) throws CoreException {
         Branch branch = getBranchByName(branchName);
         if (branch != null) {
@@ -109,6 +136,11 @@ public class VcsCore {
         throw new CoreException(String.format("Failed to checkout non-existing branch %s", branchName));
     }
 
+    /**
+     * performs commit with given message
+     * @param message {@link String} with message
+     * @throws CoreException if I/O failed or current branch is detached
+     */
     public void commit(String message) throws CoreException {
         if (currentBranch == null) {
             throw new CoreException("No branch to commit into");
@@ -121,14 +153,27 @@ public class VcsCore {
         }
     }
 
+    /**
+     * gets current commit(HEAD)
+     * @return latest commit
+     */
     public Commit getCurrentCommit() {
         return getCommitByNumber(currentCommitNumber);
     }
 
+    /**
+     * gets commit by its' number
+     * @return Commit with given number
+     */
     public Commit getCommitByNumber(long number) {
         return commits.get(number);
     }
 
+    /**
+     * searches for two commits and performs three-way merge from their ancestor
+     * @param srcBranchName branch name which we want to merge in current branch
+     * @throws CoreException if given branch was not found or I/O problem ocured
+     */
     public void merge(String srcBranchName) throws CoreException {
         Branch src = getBranchByName(srcBranchName);
         if (src == null) {

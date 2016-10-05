@@ -13,6 +13,7 @@ import java.io.IOException;
 
 /**
  * Created by Эдгар on 04.10.2016.
+ * Main class for VCS. Inits everything and writes {@link VcsCore} into file for further usage
  */
 public class VCS {
     private static final String ENV_FILENAME = "env.json";
@@ -20,6 +21,10 @@ public class VCS {
     private File envFile;
     private VcsCore core;
 
+    /**
+     * Entry point
+     * @param args
+     */
     public static void main(String[] args) {
         try {
             new VCS(args);

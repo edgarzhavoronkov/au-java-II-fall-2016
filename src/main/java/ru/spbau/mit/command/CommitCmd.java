@@ -6,8 +6,16 @@ import ru.spbau.mit.model.core.VcsCore;
 
 /**
  * Created by Эдгар on 25.09.2016.
+ * Implementation of a {@link Command} interface for Commit
  */
 public class CommitCmd implements Command {
+    /**
+     * Overridden execute method for Commit
+     * @param core {@link VcsCore} which does all the job
+     * @param args Array of {@link String} with arguments, such as message
+     * @return message whether commit was created
+     * @throws CommandFailException if something went wrong
+     */
     @Override
     public String execute(VcsCore core, String[] args) {
         if (args.length != 2) {

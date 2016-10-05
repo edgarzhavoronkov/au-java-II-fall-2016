@@ -23,6 +23,11 @@ public class CommandProvider {
         commands.put("status", new StatusCmd());
     }
 
+    /**
+     * Method for getting particular command for it's name
+     * @param name {@link String} name of a command
+     * @return particular implementation of a {@link Command} or null
+     */
     public static Command forName(String name) {
         return commands.get(name);
     }

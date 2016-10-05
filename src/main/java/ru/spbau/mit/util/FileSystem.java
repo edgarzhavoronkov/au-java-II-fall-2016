@@ -40,6 +40,11 @@ public class FileSystem {
         }
     }
 
+    /**
+     * Lists all files in repository except ones, that are located in .repo dir
+     * @param dir directory to list
+     * @return Collection of filenames
+     */
     public static Collection<File> listExternalFiles(File dir) {
         return FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, new AbstractFileFilter() {
             @Override

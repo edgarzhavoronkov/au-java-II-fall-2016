@@ -6,8 +6,16 @@ import ru.spbau.mit.model.core.VcsCore;
 
 /**
  * Created by Эдгар on 25.09.2016.
+ * Implementation of a {@link Command} interface for Checkout
  */
 public class CheckoutCmd implements Command {
+    /**
+     * Overridden execute method for Checkout
+     * @param core {@link VcsCore} which does all the job
+     * @param args Array of {@link String} with arguments
+     * @return message whether we checkout to a branch or to a commit
+     * @throws CommandFailException if something went wrong
+     */
     @Override
     public String execute(VcsCore core, String[] args) {
         if (args.length != 2) {
