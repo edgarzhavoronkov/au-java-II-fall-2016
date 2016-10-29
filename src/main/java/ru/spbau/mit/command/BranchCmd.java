@@ -1,5 +1,7 @@
 package ru.spbau.mit.command;
 
+import ru.spbau.mit.exceptions.BranchCreateFailException;
+import ru.spbau.mit.exceptions.BranchDeleteFailException;
 import ru.spbau.mit.exceptions.CommandFailException;
 import ru.spbau.mit.exceptions.CoreException;
 import ru.spbau.mit.model.core.VcsCore;
@@ -14,10 +16,10 @@ public class BranchCmd implements Command {
      * @param core {@link VcsCore} which does all the job
      * @param args Array of {@link String} with arguments
      * @return message whether branch is successfully created or deleted
-     * @throws CommandFailException if something went wrong
+     * @throws CommandFailException in general case or it's extending classes if something went wrong
      */
     @Override
-    public String execute(VcsCore core, String[] args) {
+    public String execute(VcsCore core, String[] args) throws CommandFailException {
         if (args.length != 2) {
             throw new CommandFailException("Wrong number of arguments!");
         }
@@ -28,14 +30,14 @@ public class BranchCmd implements Command {
                     core.checkoutBranch(args[1]);
                     return String.format("Created branch%s", args[1]);
                 } catch (CoreException e) {
-                    throw new CommandFailException(e);
+                    throw new BranchCreateFailException(e);
                 }
             case "-d" :
                 try {
                     core.removeBranch(args[1]);
                     return String.format("Branch %s was removed!", args[1]);
                 } catch (CoreException e) {
-                    throw new CommandFailException(e);
+                    throw new BranchDeleteFailException(e);
                 }
             default :
                 throw new CommandFailException("Wrong key! Usage: `branch -c $branch_name` to create " +

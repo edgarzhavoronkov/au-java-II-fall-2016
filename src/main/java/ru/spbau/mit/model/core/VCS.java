@@ -5,8 +5,7 @@ import ru.spbau.mit.command.CommandProvider;
 import ru.spbau.mit.exceptions.CommandFailException;
 import ru.spbau.mit.exceptions.CoreException;
 import ru.spbau.mit.exceptions.InitFailedException;
-import ru.spbau.mit.io.VcsReader;
-import ru.spbau.mit.io.VcsWriter;
+import ru.spbau.mit.io.VcsSerializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +42,7 @@ public class VCS {
             System.exit(-1);
         }
         if (core != null) {
-            VcsWriter.write(core, envFile);
+            VcsSerializer.write(core, envFile);
         }
     }
 
@@ -59,7 +58,7 @@ public class VCS {
             vcsDir = new File(parentDir, VcsCore.VCS_FOLDER_NAME);
         }
         envFile = new File(vcsDir, ENV_FILENAME);
-        return VcsReader.read(envFile);
+        return VcsSerializer.read(envFile);
     }
 
     private void executeCommand(String[] args) throws InitFailedException {
@@ -96,7 +95,7 @@ public class VCS {
     private void init() throws CoreException {
         new File(VcsCore.VCS_FOLDER_NAME).mkdirs();
         envFile = new File(VcsCore.VCS_FOLDER_NAME, ENV_FILENAME);
-        core = VcsCore.getInstance();
+        core = new VcsCore();
         core.commit("Dummy init");
     }
 }

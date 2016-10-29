@@ -18,7 +18,7 @@ public class LogCmd implements Command {
      * @throws CommandFailException if something went wrong
      */
     @Override
-    public String execute(VcsCore core, String[] args) {
+    public String execute(VcsCore core, String[] args) throws CommandFailException {
         if (args.length != 0) {
             throw new CommandFailException("Log command does not take any arguments");
         }

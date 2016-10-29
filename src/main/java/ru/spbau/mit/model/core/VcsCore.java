@@ -32,7 +32,7 @@ public class VcsCore {
     @Getter
     private final Repository repository;
 
-    private VcsCore() {
+    public VcsCore() {
         this(System.getProperty("user.dir"));
     }
 
@@ -62,14 +62,6 @@ public class VcsCore {
         this.repository = repository;
         this.nextCommitNumber = nextCommitNumber;
         branches.add(currentBranch);
-    }
-
-    /**
-     * Instance getter for {@link VcsCore}
-     * @return new instance
-     */
-    public static VcsCore getInstance() {
-        return new VcsCore();
     }
 
     /**

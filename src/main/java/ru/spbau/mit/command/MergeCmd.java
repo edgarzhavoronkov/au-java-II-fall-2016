@@ -20,7 +20,7 @@ public class MergeCmd implements Command {
      * @throws CommandFailException if something went wrong
      */
     @Override
-    public String execute(VcsCore core, String[] args) {
+    public String execute(VcsCore core, String[] args) throws CommandFailException {
         if (args.length != 1) {
             throw new CommandFailException("Wrong number of arguments!");
         }

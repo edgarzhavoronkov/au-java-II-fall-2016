@@ -4,8 +4,7 @@ import lombok.Getter;
 import org.apache.commons.io.FileUtils;
 import ru.spbau.mit.model.core.VcsCore;
 import ru.spbau.mit.exceptions.MergeFailedException;
-import ru.spbau.mit.io.SnapshotReader;
-import ru.spbau.mit.io.SnapshotWriter;
+import ru.spbau.mit.io.SnapshotSerializer;
 import ru.spbau.mit.util.FileSystem;
 
 import java.io.File;
@@ -99,7 +98,7 @@ public class Repository {
      */
     public Snapshot getSnapshotByCommitNumber(long commitNumber) throws IOException {
         File snapshotFile = getSnapshotFile(commitNumber);
-        return SnapshotReader.readSnapshot(snapshotFile);
+        return SnapshotSerializer.readSnapshot(snapshotFile);
     }
 
     /**
@@ -120,7 +119,7 @@ public class Repository {
                 }
             }
         }
-        SnapshotWriter.writeSnapshot(snapshot, getSnapshotFile(commitNumber));
+        SnapshotSerializer.writeSnapshot(snapshot, getSnapshotFile(commitNumber));
     }
 
     /**
@@ -133,7 +132,7 @@ public class Repository {
         for (String file : trackedFiles) {
             FileUtils.deleteQuietly(new File(workingDirectory, file));
         }
-        Snapshot snapshot = SnapshotReader.readSnapshot(getSnapshotFile(commitNumber));
+        Snapshot snapshot = SnapshotSerializer.readSnapshot(getSnapshotFile(commitNumber));
         trackedFiles.clear();
         trackedFiles.addAll(snapshot.filenameSet());
         for (String file : trackedFiles) {
@@ -207,7 +206,7 @@ public class Repository {
             }
         }
         try {
-            SnapshotWriter.writeSnapshot(result, getSnapshotFile(nextCommitNumber));
+            SnapshotSerializer.writeSnapshot(result, getSnapshotFile(nextCommitNumber));
         } catch (IOException e) {
             throw new MergeFailedException("Failed to write result of a merge to disk");
         }

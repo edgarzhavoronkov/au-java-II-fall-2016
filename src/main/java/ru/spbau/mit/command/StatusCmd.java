@@ -1,6 +1,7 @@
 package ru.spbau.mit.command;
 
 import ru.spbau.mit.exceptions.CommandFailException;
+import ru.spbau.mit.exceptions.StatusFailException;
 import ru.spbau.mit.model.Repository;
 import ru.spbau.mit.model.Snapshot;
 import ru.spbau.mit.model.core.VcsCore;
@@ -23,7 +24,7 @@ public class StatusCmd implements Command {
      * @throws CommandFailException if something went wrong
      */
     @Override
-    public String execute(VcsCore core, String[] args) {
+    public String execute(VcsCore core, String[] args) throws CommandFailException {
         if (args.length != 0) {
             throw new CommandFailException("Status does not takes arguments");
         }
@@ -50,17 +51,15 @@ public class StatusCmd implements Command {
                     .filter(file -> !trackedFiles.contains(file))
                     .collect(Collectors.toList());
 
-            StringBuilder result = new StringBuilder();
-
-            result.append(printList("Added files: ", addedFiles));
-            result.append(printList("Removed files: ", removedFiles));
-            result.append(printList("Modified files: ", modifiedFiles));
-            result.append(printList("Untracked files: ", untrackedFiles));
-
-            return result.toString();
+            return new StringBuilder()
+                    .append(String.valueOf(printList("Added files: ", addedFiles)))
+                    .append(printList("Removed files: ", removedFiles))
+                    .append(printList("Modified files: ", modifiedFiles))
+                    .append(printList("Untracked files: ", untrackedFiles))
+                    .toString();
 
         } catch (IOException e) {
-            throw new CommandFailException(e);
+            throw new StatusFailException(e);
         }
     }
 

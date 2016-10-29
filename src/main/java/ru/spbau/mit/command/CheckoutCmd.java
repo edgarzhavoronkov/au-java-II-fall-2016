@@ -1,5 +1,7 @@
 package ru.spbau.mit.command;
 
+import ru.spbau.mit.exceptions.CheckoutBranchFailException;
+import ru.spbau.mit.exceptions.CheckoutCommitFailException;
 import ru.spbau.mit.exceptions.CommandFailException;
 import ru.spbau.mit.exceptions.CoreException;
 import ru.spbau.mit.model.core.VcsCore;
@@ -17,7 +19,7 @@ public class CheckoutCmd implements Command {
      * @throws CommandFailException if something went wrong
      */
     @Override
-    public String execute(VcsCore core, String[] args) {
+    public String execute(VcsCore core, String[] args) throws CommandFailException {
         if (args.length != 2) {
             throw new CommandFailException("Wrong number of arguments");
         }
@@ -28,7 +30,7 @@ public class CheckoutCmd implements Command {
                     core.checkoutBranch(args[1]);
                     return String.format("Checked out branch %s", args[1]);
                 } catch (CoreException e) {
-                    throw new CommandFailException(e);
+                    throw new CheckoutBranchFailException(e);
                 }
 
             case "-c" :
@@ -36,7 +38,7 @@ public class CheckoutCmd implements Command {
                     core.checkoutCommit(Long.parseLong(args[1]));
                     return String.format("Checked out commit number %s", args[1]);
                 } catch (CoreException e) {
-                    throw new CommandFailException(e);
+                    throw new CheckoutCommitFailException(e);
                 }
 
             default :

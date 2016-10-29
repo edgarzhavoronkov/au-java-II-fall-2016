@@ -1,6 +1,7 @@
 package ru.spbau.mit.command;
 
 import ru.spbau.mit.exceptions.CommandFailException;
+import ru.spbau.mit.exceptions.ResetFailException;
 import ru.spbau.mit.model.core.VcsCore;
 
 import java.io.IOException;
@@ -18,7 +19,7 @@ public class ResetCmd implements Command {
      * @throws CommandFailException if something went wrong
      */
     @Override
-    public String execute(VcsCore core, String[] args) {
+    public String execute(VcsCore core, String[] args) throws CommandFailException {
         if (args.length != 1) {
             throw new CommandFailException("Wrong number of arguments!");
         }
@@ -27,7 +28,7 @@ public class ResetCmd implements Command {
             core.getRepository().resetFile(args[0], core.getCurrentCommit().getNumber());
             return String.format("Removed file %s from index", args[0]);
         } catch (IOException e) {
-            throw new CommandFailException(e);
+            throw new ResetFailException(e);
         }
     }
 }
