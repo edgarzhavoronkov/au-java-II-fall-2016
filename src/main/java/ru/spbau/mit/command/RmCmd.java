@@ -17,7 +17,7 @@ public class RmCmd implements Command {
      */
     @Override
     public String execute(VcsCore core, String[] args) throws CommandFailException {
-        if (args.length != 0) {
+        if (args.length == 0) {
             throw new CommandFailException("Wrong number of arguments! Rm takes list of filenames to remove");
         }
 

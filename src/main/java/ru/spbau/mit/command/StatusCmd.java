@@ -52,7 +52,7 @@ public class StatusCmd implements Command {
                     .collect(Collectors.toList());
 
             return new StringBuilder()
-                    .append(String.valueOf(printList("Added files: ", addedFiles)))
+                    .append(printList("Added files: ", addedFiles))
                     .append(printList("Removed files: ", removedFiles))
                     .append(printList("Modified files: ", modifiedFiles))
                     .append(printList("Untracked files: ", untrackedFiles))
@@ -68,7 +68,7 @@ public class StatusCmd implements Command {
         if (!list.isEmpty()) {
             res.append(listName);
             res.append("\n");
-            list.forEach(res::append);
+            list.forEach((name) -> res.append('\t').append(name).append('\n'));
         }
         return res;
     }

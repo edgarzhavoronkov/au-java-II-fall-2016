@@ -214,5 +214,4 @@ public class VcsCore {
         }
         return null;
     }
-
 }

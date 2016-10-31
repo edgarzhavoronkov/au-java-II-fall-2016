@@ -28,11 +28,11 @@ public class BranchCmd implements Command {
                 try {
                     core.createBranch(args[1]);
                     core.checkoutBranch(args[1]);
-                    return String.format("Created branch%s", args[1]);
+                    return String.format("Created branch %s", args[1]);
                 } catch (CoreException e) {
                     throw new BranchCreateFailException(e);
                 }
-            case "-d" :
+            case "-r" :
                 try {
                     core.removeBranch(args[1]);
                     return String.format("Branch %s was removed!", args[1]);
