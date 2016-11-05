@@ -1,7 +1,5 @@
 package ru.spbau.mit.exceptions;
 
-import java.io.IOException;
-
 /**
  * Created by Эдгар on 24.10.2016.
  */

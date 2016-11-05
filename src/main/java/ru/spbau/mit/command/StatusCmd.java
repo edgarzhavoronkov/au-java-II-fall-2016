@@ -1,12 +1,12 @@
 package ru.spbau.mit.command;
 
 import ru.spbau.mit.exceptions.CommandFailException;
+import ru.spbau.mit.exceptions.RepositoryException;
 import ru.spbau.mit.exceptions.StatusFailException;
 import ru.spbau.mit.model.Repository;
 import ru.spbau.mit.model.Snapshot;
 import ru.spbau.mit.model.core.VcsCore;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,7 +26,7 @@ public class StatusCmd implements Command {
     @Override
     public String execute(VcsCore core, String[] args) throws CommandFailException {
         if (args.length != 0) {
-            throw new CommandFailException("Status does not takes arguments");
+            return getUsage();
         }
 
         Repository repository = core.getRepository();
@@ -58,10 +58,16 @@ public class StatusCmd implements Command {
                     .append(printList("Untracked files: ", untrackedFiles))
                     .toString();
 
-        } catch (IOException e) {
+        } catch (RepositoryException e) {
             throw new StatusFailException(e);
         }
     }
+
+    @Override
+    public String getUsage() {
+        return "Usage: status. Does not take any arguments";
+    }
+
 
     private StringBuilder printList(String listName, List<String> list) {
         StringBuilder res = new StringBuilder();

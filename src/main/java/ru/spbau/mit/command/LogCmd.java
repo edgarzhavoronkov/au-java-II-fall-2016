@@ -15,12 +15,12 @@ public class LogCmd implements Command {
      * @param args Array of {@link String}. Must be empty
      * @return Big string with info about all {@link Commit}s
      * in current {@link ru.spbau.mit.model.Branch}
-     * @throws CommandFailException if something went wrong
+     * @throws CommandFailException if something went wrong(actualy does not throws)
      */
     @Override
-    public String execute(VcsCore core, String[] args) throws CommandFailException {
+    public String execute(VcsCore core, String[] args) {
         if (args.length != 0) {
-            throw new CommandFailException("Log command does not take any arguments");
+            return getUsage();
         }
 
         StringBuilder result = new StringBuilder();
@@ -34,5 +34,10 @@ public class LogCmd implements Command {
         }
 
         return result.toString();
+    }
+
+    @Override
+    public String getUsage() {
+        return "Usage: log. Does not take any arguments";
     }
 }

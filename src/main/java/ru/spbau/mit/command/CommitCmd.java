@@ -20,7 +20,7 @@ public class CommitCmd implements Command {
     @Override
     public String execute(VcsCore core, String[] args) throws CommandFailException {
         if (args.length != 2) {
-            throw new CommandFailException("Wrong number of arguments!");
+            return getUsage();
         }
 
         switch (args[0]) {
@@ -32,7 +32,12 @@ public class CommitCmd implements Command {
                     throw new CommitFailException(e);
                 }
             default :
-                throw new CommandFailException("Wrong key! Usage: `commit -m message`");
+                return getUsage();
         }
+    }
+
+    @Override
+    public String getUsage() {
+        return "Usage: `commit -m message`";
     }
 }

@@ -37,7 +37,11 @@ public class ResetCmdTest {
         when(core.getRepository()).thenReturn(repository);
         when(core.getCurrentCommit()).thenReturn(commit);
         when(commit.getNumber()).thenReturn(Long.valueOf(123));
-        doNothing().when(repository).resetFile(anyString(), anyLong());
+        try {
+            doNothing().when(repository).resetFile(anyString(), anyLong());
+        } catch (ru.spbau.mit.exceptions.RepositoryException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test

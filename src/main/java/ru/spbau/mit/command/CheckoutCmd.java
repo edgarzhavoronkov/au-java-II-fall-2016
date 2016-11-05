@@ -21,7 +21,7 @@ public class CheckoutCmd implements Command {
     @Override
     public String execute(VcsCore core, String[] args) throws CommandFailException {
         if (args.length != 2) {
-            throw new CommandFailException("Wrong number of arguments");
+            return getUsage();
         }
 
         switch (args[0]) {
@@ -42,9 +42,14 @@ public class CheckoutCmd implements Command {
                 }
 
             default :
-                throw new CommandFailException("Usage: checkout -b $branch_name" +
-                        " to checkout particular branch or `checkout " +
-                        "-c $commit_number` to checkout to a particular commit");
+                return getUsage();
         }
+    }
+
+    @Override
+    public String getUsage() {
+        return "Usage: checkout -b $branch_name" +
+                " to checkout particular branch or `checkout " +
+                "-c $commit_number` to checkout to a particular commit";
     }
 }

@@ -16,4 +16,6 @@ public interface Command {
      * @throws CommandFailException is something gone wrong
      */
     String execute(VcsCore core, String[] args) throws CommandFailException;
+
+    String getUsage();
 }

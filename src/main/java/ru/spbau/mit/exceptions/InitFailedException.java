@@ -9,7 +9,7 @@ public class InitFailedException extends Exception {
         super(message);
     }
 
-    public InitFailedException(CoreException cause) {
+    public InitFailedException(Throwable cause) {
         super(cause);
     }
 }

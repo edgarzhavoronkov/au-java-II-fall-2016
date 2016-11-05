@@ -18,4 +18,9 @@ public class AddCmd implements Command {
         core.getRepository().addFiles(args);
         return String.format("Added %d file(s)", args.length);
     }
+
+    @Override
+    public String getUsage() {
+        return "Usage: add $file1 $file2 ...";
+    }
 }

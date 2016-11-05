@@ -6,6 +6,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import ru.spbau.mit.exceptions.CommandFailException;
+import ru.spbau.mit.exceptions.RepositoryException;
 import ru.spbau.mit.model.Commit;
 import ru.spbau.mit.model.Repository;
 import ru.spbau.mit.model.Snapshot;
@@ -42,11 +43,15 @@ public class StatusCmdTest {
 
     @Before
     public void setUp() throws Exception {
-        when(core.getRepository()).thenReturn(repository);
-        when(core.getCurrentCommit()).thenReturn(commit);
-        when(commit.getParentCommitNumber()).thenReturn(Long.valueOf(123));
-        when(repository.getCurrentSnapshot()).thenReturn(curr);
-        when(repository.getSnapshotByCommitNumber(anyLong())).thenReturn(prev);
+        try {
+            when(core.getRepository()).thenReturn(repository);
+            when(core.getCurrentCommit()).thenReturn(commit);
+            when(commit.getParentCommitNumber()).thenReturn(Long.valueOf(123));
+            when(repository.getCurrentSnapshot()).thenReturn(curr);
+            when(repository.getSnapshotByCommitNumber(anyLong())).thenReturn(prev);
+        } catch (RepositoryException e) {
+            fail();
+        }
 
         Set<String> trackedFiles = new HashSet<>();
         trackedFiles.add("a");

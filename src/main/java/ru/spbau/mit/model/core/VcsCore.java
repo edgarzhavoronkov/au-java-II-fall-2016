@@ -2,7 +2,7 @@ package ru.spbau.mit.model.core;
 
 import lombok.Getter;
 import ru.spbau.mit.exceptions.CoreException;
-import ru.spbau.mit.exceptions.MergeFailedException;
+import ru.spbau.mit.exceptions.RepositoryException;
 import ru.spbau.mit.model.Branch;
 import ru.spbau.mit.model.Commit;
 import ru.spbau.mit.model.Repository;
@@ -102,7 +102,7 @@ public class VcsCore {
             currentBranch = null;
             try {
                 repository.checkoutCommit(currentCommitNumber);
-            } catch (IOException e) {
+            } catch (RepositoryException e) {
                 throw new CoreException("Failed to checkout due to I/O failure!");
             }
         }
@@ -121,7 +121,7 @@ public class VcsCore {
             currentCommitNumber = branch.getHeadCommitNumber();
             try {
                 repository.checkoutCommit(currentCommitNumber);
-            } catch (IOException e) {
+            } catch (RepositoryException e) {
                 throw new CoreException("Failed to checkout due to I/O failure!");
             }
         }
@@ -140,7 +140,7 @@ public class VcsCore {
         long newCommitNumber = addCommit(message);
         try {
             repository.saveCommit(newCommitNumber);
-        } catch (IOException e) {
+        } catch (RepositoryException e) {
             throw new CoreException("Failed to commit due to I/O failure!");
         }
     }
@@ -191,8 +191,8 @@ public class VcsCore {
             repository.merge(srcHeadNumber, currentCommitNumber, srcCommit.getNumber(), nextCommitNumber);
             String mergeMessage = String.format("Merged branch %s into %s", src.getName(), currentBranch.getName());
             addCommit(mergeMessage);
-        } catch (MergeFailedException e ) {
-            throw new CoreException("Failed to merge due to I/O failure");
+        } catch (RepositoryException e) {
+            throw new CoreException(e);
         }
     }
 

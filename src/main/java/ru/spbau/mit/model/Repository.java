@@ -2,6 +2,7 @@ package ru.spbau.mit.model;
 
 import lombok.Getter;
 import org.apache.commons.io.FileUtils;
+import ru.spbau.mit.exceptions.RepositoryException;
 import ru.spbau.mit.model.core.VcsCore;
 import ru.spbau.mit.exceptions.MergeFailedException;
 import ru.spbau.mit.io.SnapshotSerializer;
@@ -50,29 +51,39 @@ public class Repository {
     }
 
     /**
-     * Cleans the repository from untracked files
+     * Cleans repository from untracked files
+     * @throws RepositoryException if deletion failed
      */
-    public void clean() {
+    public void clean() throws RepositoryException {
         Snapshot snapshot = getCurrentSnapshot();
-        snapshot.filenameSet()
-                .stream()
-                .filter(file -> !trackedFiles.contains(file))
-                .forEach(file -> FileUtils.deleteQuietly(new File(workingDirectory, file)));
+        for (String file : snapshot.filenameSet()) {
+            if (!trackedFiles.contains(file)) {
+                try {
+                    FileUtils.forceDelete(new File(workingDirectory, file));
+                } catch (IOException e) {
+                    throw new RepositoryException(e);
+                }
+            }
+        }
     }
 
     /**
      * Removes file from the index in particular {@link Commit}
      * @param filename file to remove from index
      * @param commitNumber commit number when to reset file
-     * @throws IOException if I/O problem occured
+     * @throws RepositoryException if I/O problem occured
      */
-    public void resetFile(String filename, long commitNumber) throws IOException {
-        Snapshot snapshot = getSnapshotByCommitNumber(commitNumber);
-        if (!snapshot.contains(filename)) {
-            trackedFiles.remove(filename);
-        } else {
-            String hash = snapshot.getFileHash(filename);
-            FileUtils.copyFile(new File(getDataDirectory(), hash), new File(workingDirectory, filename));
+    public void resetFile(String filename, long commitNumber) throws RepositoryException {
+        try {
+            Snapshot snapshot = getSnapshotByCommitNumber(commitNumber);
+            if (!snapshot.contains(filename)) {
+                trackedFiles.remove(filename);
+            } else {
+                String hash = snapshot.getFileHash(filename);
+                FileUtils.copyFile(new File(getDataDirectory(), hash), new File(workingDirectory, filename));
+            }
+        } catch (IOException e) {
+            throw new RepositoryException(e);
         }
     }
 
@@ -94,50 +105,62 @@ public class Repository {
      * Get state of repository by the commit number
      * @param commitNumber moment to get the {@link Snapshot}
      * @return specified {@link Snapshot} of repo
-     * @throws IOException if deserialization of {@link Snapshot} failed
+     * @throws RepositoryException if deserialization of {@link Snapshot} failed
      */
-    public Snapshot getSnapshotByCommitNumber(long commitNumber) throws IOException {
+    public Snapshot getSnapshotByCommitNumber(long commitNumber) throws RepositoryException {
         File snapshotFile = getSnapshotFile(commitNumber);
-        return SnapshotSerializer.readSnapshot(snapshotFile);
+        try {
+            return SnapshotSerializer.readSnapshot(snapshotFile);
+        } catch (IOException e) {
+            throw new RepositoryException(e);
+        }
     }
 
     /**
      * Serializes commit to disk as a {@link Snapshot}
      * @param commitNumber commit to dump
-     * @throws IOException if serialization failed
+     * @throws RepositoryException if serialization failed
      */
-    public void saveCommit(long commitNumber) throws IOException {
-        Snapshot snapshot = new Snapshot();
-        for (String filename : trackedFiles) {
-            File file = new File(workingDirectory, filename);
-            if (file.exists()) {
-                String hash = FileSystem.getNewHash(file);
-                snapshot.addFile(filename, hash);
-                File dataFile = new File(getDataDirectory(), "data");
-                if (!dataFile.exists()) {
-                    FileUtils.copyFile(file, dataFile);
+    public void saveCommit(long commitNumber) throws RepositoryException {
+        try{
+            Snapshot snapshot = new Snapshot();
+            for (String filename : trackedFiles) {
+                File file = new File(workingDirectory, filename);
+                if (file.exists()) {
+                    String hash = FileSystem.getNewHash(file);
+                    snapshot.addFile(filename, hash);
+                    File dataFile = new File(getDataDirectory(), "data");
+                    if (!dataFile.exists()) {
+                        FileUtils.copyFile(file, dataFile);
+                    }
                 }
             }
+            SnapshotSerializer.writeSnapshot(snapshot, getSnapshotFile(commitNumber));
+        } catch (IOException e) {
+            throw new RepositoryException(e);
         }
-        SnapshotSerializer.writeSnapshot(snapshot, getSnapshotFile(commitNumber));
     }
 
     /**
      * Checkouts commit with given number. Does all the job with filesystem
      * Version in {@link VcsCore} wraps this one
      * @param commitNumber commit to checkout
-     * @throws IOException if I/O problems occured
+     * @throws RepositoryException if I/O problems happened
      */
-    public void checkoutCommit(long commitNumber) throws IOException {
-        for (String file : trackedFiles) {
-            FileUtils.deleteQuietly(new File(workingDirectory, file));
-        }
-        Snapshot snapshot = SnapshotSerializer.readSnapshot(getSnapshotFile(commitNumber));
-        trackedFiles.clear();
-        trackedFiles.addAll(snapshot.filenameSet());
-        for (String file : trackedFiles) {
-            String hash = snapshot.getFileHash(file);
-            FileUtils.copyFile(new File(getDataDirectory(), hash), new File(workingDirectory, file));
+    public void checkoutCommit(long commitNumber) throws RepositoryException {
+        try {
+            for (String file : trackedFiles) {
+                FileUtils.deleteQuietly(new File(workingDirectory, file));
+            }
+            Snapshot snapshot = SnapshotSerializer.readSnapshot(getSnapshotFile(commitNumber));
+            trackedFiles.clear();
+            trackedFiles.addAll(snapshot.filenameSet());
+            for (String file : trackedFiles) {
+                String hash = snapshot.getFileHash(file);
+                FileUtils.copyFile(new File(getDataDirectory(), hash), new File(workingDirectory, file));
+            }
+        } catch (IOException e) {
+            throw new RepositoryException(e);
         }
     }
 
@@ -150,23 +173,15 @@ public class Repository {
      * @param dstCommitNumber second commit
      * @param baseCommitNumber their common ancestor
      * @param nextCommitNumber merge-commit number
-     * @throws MergeFailedException if there is a conflict
+     * @throws RepositoryException if there is a conflict or writing new snapshot failed
      */
     public void merge(long srcCommitNumber
             , long dstCommitNumber
             , long baseCommitNumber
-            , long nextCommitNumber) throws MergeFailedException {
-        Snapshot srcSnapshot;
-        Snapshot dstSnapshot;
-        Snapshot baseSnapshot;
-        try {
-            srcSnapshot = getSnapshotByCommitNumber(srcCommitNumber);
-            dstSnapshot = getSnapshotByCommitNumber(dstCommitNumber);
-            baseSnapshot = getSnapshotByCommitNumber(baseCommitNumber);
-        } catch (IOException e) {
-            throw new MergeFailedException("Failed to read snapshot from disk!");
-        }
-
+            , long nextCommitNumber) throws RepositoryException {
+        Snapshot srcSnapshot = getSnapshotByCommitNumber(srcCommitNumber);
+        Snapshot dstSnapshot = getSnapshotByCommitNumber(dstCommitNumber);
+        Snapshot baseSnapshot = getSnapshotByCommitNumber(baseCommitNumber);
 
         Set<String> allFiles = new HashSet<>();
         allFiles.addAll(srcSnapshot.filenameSet());
@@ -191,7 +206,7 @@ public class Repository {
             boolean isConflict = isChangedInSrc && isChangedInDst && changesAreDifferent;
 
             if (isConflict) {
-                throw new MergeFailedException(String.format("Merge conflict in file%s. Aborting!", filename));
+                throw new RepositoryException(String.format("Merge conflict in file%s. Aborting!", filename));
             }
 
             if (isChangedInSrc) {
@@ -205,10 +220,11 @@ public class Repository {
                 result.addFile(filename, dstSnapshot.getFileHash(filename));
             }
         }
+
         try {
             SnapshotSerializer.writeSnapshot(result, getSnapshotFile(nextCommitNumber));
         } catch (IOException e) {
-            throw new MergeFailedException("Failed to write result of a merge to disk");
+            throw new RepositoryException(e);
         }
     }
 

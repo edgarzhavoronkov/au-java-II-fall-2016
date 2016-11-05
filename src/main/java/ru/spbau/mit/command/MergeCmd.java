@@ -2,6 +2,7 @@ package ru.spbau.mit.command;
 
 import ru.spbau.mit.exceptions.CommandFailException;
 import ru.spbau.mit.exceptions.CoreException;
+import ru.spbau.mit.exceptions.MergeFailedException;
 import ru.spbau.mit.model.core.VcsCore;
 
 /**
@@ -22,14 +23,19 @@ public class MergeCmd implements Command {
     @Override
     public String execute(VcsCore core, String[] args) throws CommandFailException {
         if (args.length != 1) {
-            throw new CommandFailException("Wrong number of arguments!");
+            return getUsage();
         }
 
         try {
             core.merge(args[0]);
             return String.format("Merged branch %s into %s", args[0], core.getCurrentBranch().getName());
         } catch (CoreException e) {
-            throw new CommandFailException(e);
+            throw new MergeFailedException(e.getMessage());
         }
+    }
+
+    @Override
+    public String getUsage() {
+        return "Usage: merge $branch_name. Merges branch $branch_name into current branch";
     }
 }

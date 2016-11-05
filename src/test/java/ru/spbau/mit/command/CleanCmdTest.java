@@ -6,6 +6,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import ru.spbau.mit.exceptions.CommandFailException;
+import ru.spbau.mit.exceptions.RepositoryException;
 import ru.spbau.mit.model.Repository;
 import ru.spbau.mit.model.core.VcsCore;
 
@@ -29,7 +30,11 @@ public class CleanCmdTest {
     @Before
     public void setUp() throws Exception {
         when(core.getRepository()).thenReturn(repository);
-        doNothing().when(repository).clean();
+        try {
+            doNothing().when(repository).clean();
+        } catch (RepositoryException e) {
+            fail();
+        }
     }
 
     @Test
