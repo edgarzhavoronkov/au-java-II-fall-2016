@@ -23,9 +23,19 @@ public class SimpleClientServerTest {
     private final SimpleServer server = new SimpleServer();
     private final SimpleClient client = new SimpleClient();
 
+    private Thread serverThread = new Thread (() -> {
+        try {
+            server.start(8080);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    });
+
     @Before
     public void setUp() throws Exception {
-        server.start(8080);
+        serverThread.start();
+        //shitty hack to ensure, that server launches before client connects to him
+        Thread.sleep(1000);
         client.connect("localhost", 8080);
     }
 
@@ -47,7 +57,8 @@ public class SimpleClientServerTest {
     @Test
     public void testExistingFileGet() throws Exception {
         File onServer = new File("src/test/resources/a/a");
-        File result = client.executeGet("src/test/resources/a/a", "src/test/resources/a_get");
+        client.executeGet("src/test/resources/a/a", "src/test/resources/a_get");
+        File result = new File("src/test/resources/a_get");
         assertTrue(FileUtils.contentEquals(onServer, result));
         //noinspection ResultOfMethodCallIgnored
         result.delete();
@@ -55,8 +66,8 @@ public class SimpleClientServerTest {
 
     @Test
     public void testNonExistingFileGet() throws Exception {
-        File result = client.executeGet("src/test/resources/a/b", "src/test/resources/b_get");
-        assertNull(result);
+        client.executeGet("src/test/resources/a/b", "src/test/resources/b_get");
+        assertFalse(new File("src/test/resources/b_get").exists());
     }
 
     @Test
@@ -106,6 +117,6 @@ public class SimpleClientServerTest {
     @After
     public void tearDown() throws Exception {
         client.disconnect();
-        server.stop();
+        serverThread.join();
     }
 }

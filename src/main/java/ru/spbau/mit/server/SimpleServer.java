@@ -1,6 +1,12 @@
 package ru.spbau.mit.server;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import ru.spbau.mit.exceptions.ServerException;
+import ru.spbau.mit.util.RequestType;
+
 import java.io.*;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -31,17 +37,7 @@ public class SimpleServer {
     private ServerSocket serverSocket;
     private ExecutorService executorService;
 
-    private final Runnable connectionsHandler = () -> {
-        try {
-            while (!serverSocket.isClosed()) {
-                Socket socket = serverSocket.accept();
-                executorService.execute(new ConnectionHandler(socket));
-            }
-        } catch (IOException ignored) {
-            // FIXME: 15.10.2016 Is there any proper way to handle this?
-            //throw new RuntimeException(e);
-        }
-    };
+    private final static Logger log = LogManager.getLogger(SimpleServer.class);
 
     /**
      * Starts server on given port
@@ -51,7 +47,18 @@ public class SimpleServer {
     public void start(int port) throws IOException {
         serverSocket = new ServerSocket(port);
         executorService = Executors.newCachedThreadPool();
-        executorService.execute(connectionsHandler);
+        log.info(String.format("Started server on host %s on port number %d"
+                , InetAddress.getLocalHost().getHostName()
+                , port));
+        try {
+            while (!serverSocket.isClosed()) {
+                Socket socket = serverSocket.accept();
+                log.info(String.format("Accepted connection from %s", socket.getInetAddress()));
+                executorService.execute(new ConnectionHandler(socket));
+            }
+        } catch (IOException e) {
+            //throw new ServerException(e);
+        }
     }
 
     /**
@@ -61,13 +68,14 @@ public class SimpleServer {
     public void stop() throws IOException {
         serverSocket.close();
         executorService.shutdown();
+        log.info("Stopped server");
     }
 
     private static class ConnectionHandler implements Runnable {
         private final Socket socket;
         private final DataInputStream inputStream;
         private final DataOutputStream outputStream;
-
+        private final static Logger log = LogManager.getLogger(SimpleServer.class);
 
         ConnectionHandler(Socket socket) throws IOException {
             this.socket = socket;
@@ -77,67 +85,79 @@ public class SimpleServer {
 
         @Override
         public void run() {
-            while (!socket.isClosed()) {
+            while (!socket.isClosed() && socket.isConnected()) {
                 try {
-                    int request = inputStream.readInt();
-                    String path = inputStream.readUTF();
+                    if (inputStream.available() > 0) {
+                        RequestType requestType = RequestType.values()[inputStream.readInt()];
+                        String path = inputStream.readUTF();
+                        log.info(String.format("Received request %s from %s", requestType.toString(), socket.getInetAddress()));
+                        switch (requestType) {
+                            case LIST : {
+                                handleList(path);
+                                break;
+                            }
 
-                    switch (request) {
-                        case 1 : {
-                            handleList(path);
-                            break;
-                        }
+                            case GET : {
+                                handleGet(path);
+                                break;
+                            }
 
-                        case 2 : {
-                            handleGet(path);
-                            break;
+                            default : {
+                                throw new ServerException("Unknown type of request!");
+                            }
                         }
-
-                        default : {
-                            throw new RuntimeException("Unknown type of request!");
-                        }
+                        outputStream.flush();
                     }
-                } catch (IOException ignored) {
-                    // FIXME: 15.10.2016 And here?
-                    //throw new RuntimeException(e);
+                } catch (IOException e) {
+                    //throw new ServerException(e);
                 }
             }
+            log.info(String.format("Closed connection to %s", socket.getInetAddress()));
         }
 
         private void handleList(String path) throws IOException {
             File file = new File(path);
-
+            log.info(String.format("Handling list request for directory %s", path));
             if (file.exists() && file.isDirectory()) {
                 File[] files = file.listFiles();
-                //TODO: NPE warning?
-                outputStream.writeInt(files.length);
-                for (File f : files) {
-                    outputStream.writeUTF(f.getName());
-                    outputStream.writeBoolean(f.isDirectory());
+                if (files != null) {
+                    outputStream.writeInt(files.length);
+                    for (File f : files) {
+                        outputStream.writeUTF(f.getName());
+                        outputStream.writeBoolean(f.isDirectory());
+                    }
+                    log.info(String.format("Successfully processed list request for directory %s", path));
+                } else {
+                    throw new RuntimeException("Almost impossible happened");
                 }
             } else {
+                log.info(String.format("Directory %s was not found, sending reply", path));
                 outputStream.writeInt(-1);
             }
-            outputStream.flush();
+            //outputStream.flush();
         }
 
         private void handleGet(String path) throws IOException {
+            log.info(String.format("Handling get request for file %s", path));
             File file = new File(path);
 
             if (file.exists() && !file.isDirectory()) {
-                FileInputStream fileInputStream = new FileInputStream(file);
-                outputStream.writeLong(file.length());
 
-                byte[] bytes = new byte[1024];
+                try (FileInputStream fileInputStream = new FileInputStream(file)) {
+                    outputStream.writeLong(file.length());
 
-                while (fileInputStream.read(bytes) != -1) {
-                    outputStream.write(bytes);
+                    byte[] bytes = new byte[1024];
+
+                    while (fileInputStream.read(bytes) != -1) {
+                        outputStream.write(bytes);
+                    }
+                    log.info(String.format("Handled successfully get request for file %s", path));
                 }
-                fileInputStream.close();
             } else {
+                log.info(String.format("No file %s found! Sending zero reply", path));
                 outputStream.writeLong(0);
             }
-            outputStream.flush();
+            //outputStream.flush();
         }
     }
 }

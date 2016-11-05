@@ -1,5 +1,9 @@
 package ru.spbau.mit.client;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import ru.spbau.mit.util.RequestType;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.Collections;
@@ -22,6 +26,8 @@ public class SimpleClient {
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
 
+    private final static Logger log = LogManager.getLogger(SimpleClient.class);
+
     /**
      * Connects to host and knocks to port
      * @param hostname name of host to connect
@@ -32,14 +38,18 @@ public class SimpleClient {
         clientSocket = new Socket(hostname, port);
         inputStream = new DataInputStream(clientSocket.getInputStream());
         outputStream = new DataOutputStream(clientSocket.getOutputStream());
+        log.info(String.format("Connected to host %s to port %d", hostname, port));
     }
 
     /**
      * Closes current connection
-     * @throws IOException if failes
+     * @throws IOException if fails
      */
     public void disconnect() throws IOException {
+        inputStream.close();
+        outputStream.close();
         clientSocket.close();
+        log.info(String.format("Disconnected from %s", clientSocket.getInetAddress()));
     }
 
     /**
@@ -50,34 +60,35 @@ public class SimpleClient {
      * @throws IOException if something fails
      */
     public Map<String, Boolean> executeList(String path) throws IOException {
-        sendRequest(1, path);
+        sendRequest(RequestType.LIST, path);
         return processList();
-
     }
 
     /**
-     * Executes GET query. Sens request to server
-     * then waits for reply and processes it
+     * Executes GET query. Sends request to server
+     * then waits for reply and creates a corresponding file
      * @param path path to file on server to get
-     * @return java.io.File of corresponding content
      * @throws IOException if something fails
      */
-    public File executeGet(String path, String dst) throws IOException {
-        sendRequest(2, path);
-        return processGet(dst);
+    public void executeGet(String path, String dst) throws IOException {
+        sendRequest(RequestType.GET, path);
+        processGet(dst);
     }
 
-    private void sendRequest(int request, String path) throws IOException {
-        outputStream.writeInt(request);
+    private void sendRequest(RequestType request, String path) throws IOException {
+        outputStream.writeInt(request.ordinal());
         outputStream.writeUTF(path);
         outputStream.flush();
+        log.info(String.format("Sent %s request to server. Waiting for reply", request.toString()));
     }
 
     private Map<String,Boolean> processList() throws IOException {
+        log.info("Processing list request");
         int size = inputStream.readInt();
-        // -1 means that directory does not exists in server TODO: return null in that case?
+        log.info("Receiving reply!");
+        log.info(String.format("Received size: %d", size));
         if (size == -1) {
-            return Collections.emptyMap();
+            return null;
         } else {
             Map<String, Boolean> res = new HashMap<>();
             for (int i = 0; i < size; ++i) {
@@ -85,33 +96,32 @@ public class SimpleClient {
                 Boolean isDir = inputStream.readBoolean();
                 res.put(name, isDir);
             }
+            log.info("Received list of files");
             return res;
         }
     }
 
-    private File processGet(String path) throws IOException {
+    private void processGet(String path) throws IOException {
+        log.info("Processing get request");
         long size = inputStream.readLong();
-        if (size == 0) {
-            return null;
-        } else {
+        log.info("Receiving reply!");
+        log.info(String.format("Received size: %d", size));
+        if (size != 0) {
             File result = new File(path);
-            //noinspection ResultOfMethodCallIgnored
-            result.createNewFile();
+            try (FileOutputStream fileOutputStream = new FileOutputStream(result)) {
+                byte[] buffer = new byte[1024];
 
-            FileOutputStream fileOutputStream = new FileOutputStream(result);
-
-            byte[] buffer = new byte[1024];
-
-            for (int i = 0, len; i < size; i += len) {
-                len = (int) (size - i > buffer.length ? buffer.length : size - i);
+                for (int i = 0, len; i < size; i += len) {
+                    len = (int) (size - i > buffer.length ? buffer.length : size - i);
+                    //noinspection ResultOfMethodCallIgnored
+                    inputStream.read(buffer, 0, len);
+                    fileOutputStream.write(buffer, 0, len);
+                }
+                log.info("Received file's bytes");
                 //noinspection ResultOfMethodCallIgnored
-                inputStream.read(buffer, 0, len);
-                fileOutputStream.write(buffer, 0, len);
+                result.createNewFile();
+                fileOutputStream.flush();
             }
-
-            fileOutputStream.flush();
-            fileOutputStream.close();
-            return result;
         }
     }
 }
