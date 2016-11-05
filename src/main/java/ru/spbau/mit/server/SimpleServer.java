@@ -107,9 +107,10 @@ public class SimpleServer {
                             }
                         }
                         outputStream.flush();
+                        log.info(String.format("Reply for %s request is sent", requestType.toString()));
                     }
                 } catch (IOException e) {
-                    //throw new ServerException(e);
+                    throw new ServerException(e);
                 }
             }
             log.info(String.format("Closed connection to %s", socket.getInetAddress()));
@@ -117,11 +118,12 @@ public class SimpleServer {
 
         private void handleList(String path) throws IOException {
             File file = new File(path);
-            log.info(String.format("Handling list request for directory %s", path));
+            log.info(String.format("Forming reply for list request for directory %s", path));
             if (file.exists() && file.isDirectory()) {
                 File[] files = file.listFiles();
                 if (files != null) {
                     outputStream.writeInt(files.length);
+                    log.info(String.format("Wrote %s size: %d", path, files.length));
                     for (File f : files) {
                         outputStream.writeUTF(f.getName());
                         outputStream.writeBoolean(f.isDirectory());
@@ -131,10 +133,9 @@ public class SimpleServer {
                     throw new RuntimeException("Almost impossible happened");
                 }
             } else {
-                log.info(String.format("Directory %s was not found, sending reply", path));
+                log.info(String.format("Directory %s was not found, sending -1 reply", path));
                 outputStream.writeInt(-1);
             }
-            //outputStream.flush();
         }
 
         private void handleGet(String path) throws IOException {
@@ -145,7 +146,7 @@ public class SimpleServer {
 
                 try (FileInputStream fileInputStream = new FileInputStream(file)) {
                     outputStream.writeLong(file.length());
-
+                    log.info(String.format("Wrote %s size: %d", path, file.length()));
                     byte[] bytes = new byte[1024];
 
                     while (fileInputStream.read(bytes) != -1) {
@@ -157,7 +158,6 @@ public class SimpleServer {
                 log.info(String.format("No file %s found! Sending zero reply", path));
                 outputStream.writeLong(0);
             }
-            //outputStream.flush();
         }
     }
 }
