@@ -37,7 +37,7 @@ public class ClientMain {
             String[] split = input.split("\\s+");
 
             switch (split[0]) {
-                case "list" :
+                case "list" : {
                     try {
                         Map<String, Boolean> result = client.executeList(split[1]);
                         if (result != null) {
@@ -51,16 +51,16 @@ public class ClientMain {
                         System.err.println(e.getMessage());
                     }
                     break;
-
-                case "get" :
+                }
+                case "get" : {
                     try {
                         client.executeGet(split[1], split[2]);
                     } catch (IOException e) {
                         System.err.println(e.getMessage());
                     }
                     break;
-
-                case "exit" :
+                }
+                case "exit" : {
                     try {
                         client.disconnect();
                         System.exit(0);
@@ -69,10 +69,11 @@ public class ClientMain {
                         System.exit(-1);
                     }
                     break;
-
-                default:
+                }
+                default: {
                     System.err.println("Unknown request!");
                     break;
+                }
             }
         }
     }

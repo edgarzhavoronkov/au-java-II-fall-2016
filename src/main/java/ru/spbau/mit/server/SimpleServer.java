@@ -1,5 +1,6 @@
 package ru.spbau.mit.server;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import ru.spbau.mit.exceptions.ServerException;
@@ -113,7 +114,11 @@ public class SimpleServer {
                     throw new ServerException(e);
                 }
             }
-            log.info(String.format("Closed connection to %s", socket.getInetAddress()));
+            try {
+                socket.close();
+                log.info(String.format("Closed connection to %s", socket.getInetAddress()));
+            } catch (IOException ignored) {
+            }
         }
 
         private void handleList(String path) throws IOException {
@@ -141,17 +146,13 @@ public class SimpleServer {
         private void handleGet(String path) throws IOException {
             log.info(String.format("Handling get request for file %s", path));
             File file = new File(path);
-
             if (file.exists() && !file.isDirectory()) {
 
                 try (FileInputStream fileInputStream = new FileInputStream(file)) {
                     outputStream.writeLong(file.length());
                     log.info(String.format("Wrote %s size: %d", path, file.length()));
-                    byte[] bytes = new byte[1024];
 
-                    while (fileInputStream.read(bytes) != -1) {
-                        outputStream.write(bytes);
-                    }
+                    IOUtils.copyLarge(fileInputStream, outputStream);
                     log.info(String.format("Handled successfully get request for file %s", path));
                 }
             } else {

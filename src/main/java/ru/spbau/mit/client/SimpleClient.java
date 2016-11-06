@@ -1,5 +1,6 @@
 package ru.spbau.mit.client;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import ru.spbau.mit.util.RequestType;
@@ -46,10 +47,9 @@ public class SimpleClient {
      * @throws IOException if fails
      */
     public void disconnect() throws IOException {
-        inputStream.close();
-        outputStream.close();
         clientSocket.close();
         log.info(String.format("Disconnected from %s", clientSocket.getInetAddress()));
+        clientSocket = null;
     }
 
     /**
@@ -109,14 +109,7 @@ public class SimpleClient {
         if (size != 0) {
             File result = new File(path);
             try (FileOutputStream fileOutputStream = new FileOutputStream(result)) {
-                byte[] buffer = new byte[1024];
-
-                for (int i = 0, len; i < size; i += len) {
-                    len = (int) (size - i > buffer.length ? buffer.length : size - i);
-                    //noinspection ResultOfMethodCallIgnored
-                    inputStream.read(buffer, 0, len);
-                    fileOutputStream.write(buffer, 0, len);
-                }
+                IOUtils.copyLarge(inputStream, fileOutputStream, 0, size);
                 log.info("Received file's bytes");
                 //noinspection ResultOfMethodCallIgnored
                 result.createNewFile();
