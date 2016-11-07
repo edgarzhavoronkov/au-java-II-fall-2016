@@ -109,11 +109,6 @@ public class SimpleServer {
                             break;
                         }
 
-                        case CLOSE: {
-                            socket.close();
-                            log.info(String.format("Disconnected %s", socket.getInetAddress()));
-                        }
-
                         default : {
                             throw new ServerException("Unknown type of request!");
                         }
@@ -121,7 +116,7 @@ public class SimpleServer {
                     outputStream.flush();
                     log.info(String.format("Reply for %s request is sent", requestType.toString()));
                 } catch (IOException e) {
-
+                    throw new ServerException(e);
                 }
             }
 

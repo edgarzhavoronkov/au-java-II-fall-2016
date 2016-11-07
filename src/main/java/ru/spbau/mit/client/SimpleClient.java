@@ -47,8 +47,6 @@ public class SimpleClient {
      * @throws IOException if fails
      */
     public void disconnect() throws IOException {
-        outputStream.writeInt(RequestType.CLOSE.ordinal());
-        outputStream.flush();
         clientSocket.close();
         log.info(String.format("Disconnected from %s", clientSocket.getInetAddress()));
     }
