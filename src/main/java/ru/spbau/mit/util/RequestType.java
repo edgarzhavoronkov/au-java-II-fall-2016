@@ -11,10 +11,18 @@ public enum RequestType {
             return "list";
         }
     },
+
     GET {
         @Override
         public String toString() {
             return "get";
+        }
+    },
+
+    CLOSE {
+        @Override
+        public String toString() {
+            return "close";
         }
     }
 }

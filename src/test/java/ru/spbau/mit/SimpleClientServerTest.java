@@ -35,7 +35,7 @@ public class SimpleClientServerTest {
     public void setUp() throws Exception {
         serverThread.start();
         //shitty hack to ensure, that server launches before client connects to him
-        Thread.sleep(1000);
+        //Thread.sleep(1000);
         client.connect("localhost", 8080);
     }
 
@@ -95,7 +95,7 @@ public class SimpleClientServerTest {
                     fail();
                 } finally {
                     try {
-                        client.disconnect();
+                        simpleClient.disconnect();
                     } catch (IOException e) {
                         fail(e.getMessage());
                     }

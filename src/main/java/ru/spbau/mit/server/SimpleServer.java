@@ -38,6 +38,18 @@ public class SimpleServer {
     private ServerSocket serverSocket;
     private ExecutorService executorService;
 
+    private final Thread connectionAcceptor = new Thread(() -> {
+        try {
+            while (!serverSocket.isClosed()) {
+            Socket socket = serverSocket.accept();
+            log.info(String.format("Accepted connection from %s", socket.getInetAddress()));
+            executorService.submit(new ConnectionHandler(socket));
+            }
+        } catch (IOException e) {
+        //throw new ServerException(e);
+        }
+    });
+
     private final static Logger log = LogManager.getLogger(SimpleServer.class);
 
     /**
@@ -48,18 +60,8 @@ public class SimpleServer {
     public void start(int port) throws IOException {
         serverSocket = new ServerSocket(port);
         executorService = Executors.newCachedThreadPool();
-        log.info(String.format("Started server on host %s on port number %d"
-                , InetAddress.getLocalHost().getHostName()
-                , port));
-        try {
-            while (!serverSocket.isClosed()) {
-                Socket socket = serverSocket.accept();
-                log.info(String.format("Accepted connection from %s", socket.getInetAddress()));
-                executorService.execute(new ConnectionHandler(socket));
-            }
-        } catch (IOException e) {
-            //throw new ServerException(e);
-        }
+        log.info(String.format("Started server at %s", serverSocket.getInetAddress()));
+        connectionAcceptor.start();
     }
 
     /**
@@ -67,9 +69,14 @@ public class SimpleServer {
      * @throws IOException if failed to close internal socket
      */
     public void stop() throws IOException {
-        serverSocket.close();
-        executorService.shutdown();
-        log.info("Stopped server");
+        try {
+            connectionAcceptor.join();
+            serverSocket.close();
+            executorService.shutdown();
+            log.info("Stopped server");
+        } catch (InterruptedException e) {
+            throw new ServerException(e);
+        }
     }
 
     private static class ConnectionHandler implements Runnable {
@@ -88,37 +95,36 @@ public class SimpleServer {
         public void run() {
             while (!socket.isClosed() && socket.isConnected()) {
                 try {
-                    if (inputStream.available() > 0) {
-                        RequestType requestType = RequestType.values()[inputStream.readInt()];
-                        String path = inputStream.readUTF();
-                        log.info(String.format("Received request %s from %s", requestType.toString(), socket.getInetAddress()));
-                        switch (requestType) {
-                            case LIST : {
-                                handleList(path);
-                                break;
-                            }
-
-                            case GET : {
-                                handleGet(path);
-                                break;
-                            }
-
-                            default : {
-                                throw new ServerException("Unknown type of request!");
-                            }
+                    RequestType requestType = RequestType.values()[inputStream.readInt()];
+                    String path = inputStream.readUTF();
+                    log.info(String.format("Received request %s from %s", requestType.toString(), socket.getInetAddress()));
+                    switch (requestType) {
+                        case LIST : {
+                            handleList(path);
+                            break;
                         }
-                        outputStream.flush();
-                        log.info(String.format("Reply for %s request is sent", requestType.toString()));
+
+                        case GET : {
+                            handleGet(path);
+                            break;
+                        }
+
+                        case CLOSE: {
+                            socket.close();
+                            log.info(String.format("Disconnected %s", socket.getInetAddress()));
+                        }
+
+                        default : {
+                            throw new ServerException("Unknown type of request!");
+                        }
                     }
+                    outputStream.flush();
+                    log.info(String.format("Reply for %s request is sent", requestType.toString()));
                 } catch (IOException e) {
-                    throw new ServerException(e);
+
                 }
             }
-            try {
-                socket.close();
-                log.info(String.format("Closed connection to %s", socket.getInetAddress()));
-            } catch (IOException ignored) {
-            }
+
         }
 
         private void handleList(String path) throws IOException {
