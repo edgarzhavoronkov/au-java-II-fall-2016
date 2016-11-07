@@ -1,5 +1,7 @@
 package ru.spbau.mit.command;
 
+import ru.spbau.mit.exceptions.AddFailException;
+import ru.spbau.mit.exceptions.CommandFailException;
 import ru.spbau.mit.model.core.VcsCore;
 
 /**
@@ -14,7 +16,12 @@ public class AddCmd implements Command {
      * @return Message with number of added files
      */
     @Override
-    public String execute(VcsCore core, String[] args) {
+    public String execute(VcsCore core, String[] args) throws CommandFailException {
+        for (String filepath : args) {
+            if (!core.getRepository().isFileInRepo(filepath)) {
+                throw new AddFailException(String.format("File %s lies out of vcs root folder", filepath));
+            }
+        }
         core.getRepository().addFiles(args);
         return String.format("Added %d file(s)", args.length);
     }

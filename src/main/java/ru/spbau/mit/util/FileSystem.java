@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
@@ -20,7 +22,10 @@ import java.util.Collection;
  */
 public class FileSystem {
     public static String getRelativePath(File file, String workingDirectory) {
-        return file.getAbsolutePath().substring(workingDirectory.length() + 1);
+        Path base = Paths.get(workingDirectory).toAbsolutePath().normalize();
+        Path filepath = Paths.get(file.getAbsolutePath()).normalize();
+        Path relative = base.relativize(filepath).normalize();
+        return relative.toString();
     }
 
     public static String getNewHash(File file) {

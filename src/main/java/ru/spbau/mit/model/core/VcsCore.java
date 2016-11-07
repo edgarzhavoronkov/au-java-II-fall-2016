@@ -73,6 +73,7 @@ public class VcsCore {
         Branch branch = new Branch(name, currentCommitNumber);
         if (!branches.contains(branch)) {
             branches.add(branch);
+            return;
         }
         throw new CoreException(String.format("Branch %s already exists", name));
     }
@@ -86,6 +87,7 @@ public class VcsCore {
         Branch branch = getBranchByName(name);
         if (branch != null) {
             branches.remove(branch);
+            return;
         }
         throw new CoreException(String.format("Failed to remove non-existent branch %s", name));
     }
@@ -102,6 +104,7 @@ public class VcsCore {
             currentBranch = null;
             try {
                 repository.checkoutCommit(currentCommitNumber);
+                return;
             } catch (RepositoryException e) {
                 throw new CoreException("Failed to checkout due to I/O failure!");
             }
@@ -121,6 +124,7 @@ public class VcsCore {
             currentCommitNumber = branch.getHeadCommitNumber();
             try {
                 repository.checkoutCommit(currentCommitNumber);
+                return;
             } catch (RepositoryException e) {
                 throw new CoreException("Failed to checkout due to I/O failure!");
             }
@@ -140,6 +144,7 @@ public class VcsCore {
         long newCommitNumber = addCommit(message);
         try {
             repository.saveCommit(newCommitNumber);
+            return;
         } catch (RepositoryException e) {
             throw new CoreException("Failed to commit due to I/O failure!");
         }

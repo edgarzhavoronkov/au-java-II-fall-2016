@@ -10,6 +10,8 @@ import ru.spbau.mit.util.FileSystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
@@ -248,6 +250,17 @@ public class Repository {
         String relativePath = FileSystem.getRelativePath(file, workingDirectory);
         trackedFiles.remove(relativePath);
         FileUtils.deleteQuietly(file);
+    }
+
+    /**
+     * Literally, checks if given file is not outside the working directory
+     * @param filepath - path to file to check
+     * @return true - if yes, otherwise - false
+     */
+    public boolean isFileInRepo(String filepath) {
+        String fullPathToWorkingDirectory = Paths.get(new File(workingDirectory).getAbsolutePath()).normalize().toString();
+        String fullPathToFile = Paths.get(new File(filepath).getAbsolutePath()).normalize().toString();
+        return fullPathToFile.startsWith(fullPathToWorkingDirectory);
     }
 
     private File getVcsFolder() {
