@@ -1,14 +1,12 @@
-package ru.spbau.mit.torrent.utils.file;
-
-import java.util.UUID;
+package ru.spbau.mit.torrent.utils;
 
 /**
  * Created by Эдгар on 30.10.2016.
  */
 public class FileInfo {
-    private UUID fileId;
-
+    private long fileId;
     private String name;
+    private long size;
 
     //TODO
 }

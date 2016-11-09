@@ -1,4 +1,4 @@
-package ru.spbau.mit.torrent.utils.file;
+package ru.spbau.mit.torrent.utils;
 
 /**
  * Created by Эдгар on 30.10.2016.

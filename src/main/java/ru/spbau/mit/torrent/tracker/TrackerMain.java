@@ -6,6 +6,14 @@ package ru.spbau.mit.torrent.tracker;
 public class TrackerMain {
     // TODO
     public static void main(String[] args) {
+        Tracker tracker = new Tracker();
+
+        Runtime.getRuntime().addShutdownHook(new Thread( () -> {
+            tracker.stop();
+        }));
+
+        tracker.start();
+
 
     }
 }
