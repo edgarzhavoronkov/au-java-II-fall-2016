@@ -43,7 +43,7 @@ public class SimpleServer {
     /**
      * Starts server on given port
      * @param port port to start server on
-     * @throws ServerException if failed to open internal
+     * @throws ServerException if failed to open internal socket
      */
     public void start(int port) throws ServerException {
         try {
@@ -62,7 +62,7 @@ public class SimpleServer {
 
     /**
      * Stops server
-     * @throws ServerException if failed to close internal socket or failed to join internal thread
+     * @throws ServerException if failed to close internal socket
      */
     public void stop() throws ServerException {
         try {
