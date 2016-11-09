@@ -1,6 +1,6 @@
 package ru.spbau.mit.server;
 
-import java.io.IOException;
+import ru.spbau.mit.exceptions.ServerException;
 
 /**
  * Created by Эдгар on 08.10.2016.
@@ -14,28 +14,29 @@ public class ServerMain {
         }
         int port = Integer.parseInt(args[0]);
         SimpleServer server = new SimpleServer();
-        try {
-            server.start(port);
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-        } finally {
-            try {
-                server.stop();
-            } catch (IOException e) {
-                System.err.println(e.getMessage());
-                System.exit(-1);
-            }
-        }
 
         Runtime.getRuntime().addShutdownHook(new Thread(
                 () -> {
                     try {
                         server.stop();
-                    } catch (IOException e) {
+                    } catch (ServerException e) {
                         System.err.println(e.getMessage());
                         System.exit(-1);
                     }
                 }
         ));
+
+        try {
+            server.start(port);
+        } catch (ServerException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                server.stop();
+            } catch (ServerException e) {
+                System.err.println(e.getMessage());
+                System.exit(-1);
+            }
+        }
     }
 }
