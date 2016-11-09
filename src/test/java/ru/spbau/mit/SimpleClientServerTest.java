@@ -47,10 +47,9 @@ public class SimpleClientServerTest {
     }
 
     @Test
-    public void testEmptyDirectoryList() throws Exception {
-        Map<String, Boolean> expected = Collections.EMPTY_MAP;
+    public void testNonExistingDirectoryList() throws Exception {
         Map<String, Boolean> actual = client.executeList("src/test/resources/b");
-        assertEquals(expected, actual);
+        assertNull(actual);
     }
 
     @Test
