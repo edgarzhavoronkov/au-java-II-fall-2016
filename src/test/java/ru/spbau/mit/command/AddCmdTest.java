@@ -30,6 +30,7 @@ public class AddCmdTest {
     @Before
     public void setUp() throws Exception {
         when(core.getRepository()).thenReturn(repository);
+        when(repository.isFileInRepo(anyString())).thenReturn(true);
         doNothing().when(repository).addFiles(any(String[].class));
     }
 
