@@ -7,7 +7,6 @@ import ru.spbau.mit.util.RequestType;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,6 +46,7 @@ public class SimpleClient {
      * @throws IOException if fails
      */
     public void disconnect() throws IOException {
+        sendRequest(RequestType.CLOSE, "");
         clientSocket.close();
         log.info(String.format("Disconnected from %s", clientSocket.getInetAddress()));
     }

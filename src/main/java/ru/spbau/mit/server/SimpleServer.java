@@ -38,43 +38,38 @@ public class SimpleServer {
     private ServerSocket serverSocket;
     private ExecutorService executorService;
 
-    private final Thread connectionAcceptor = new Thread(() -> {
-        try {
-            while (!serverSocket.isClosed()) {
-            Socket socket = serverSocket.accept();
-            log.info(String.format("Accepted connection from %s", socket.getInetAddress()));
-            executorService.submit(new ConnectionHandler(socket));
-            }
-        } catch (IOException e) {
-        //throw new ServerException(e);
-        }
-    });
-
     private final static Logger log = LogManager.getLogger(SimpleServer.class);
 
     /**
      * Starts server on given port
      * @param port port to start server on
-     * @throws IOException if something fails
+     * @throws ServerException if failed to open internal socket
      */
-    public void start(int port) throws IOException {
-        serverSocket = new ServerSocket(port);
-        executorService = Executors.newCachedThreadPool();
-        log.info(String.format("Started server at %s", serverSocket.getInetAddress()));
-        connectionAcceptor.start();
+    public void start(int port) throws ServerException {
+        try {
+            serverSocket = new ServerSocket(port);
+            executorService = Executors.newCachedThreadPool();
+            log.info(String.format("Started server at %s", serverSocket.getInetAddress()));
+            while (!serverSocket.isClosed()) {
+                Socket socket = serverSocket.accept();
+                log.info(String.format("Accepted connection from %s", socket.getInetAddress()));
+                executorService.submit(new ConnectionHandler(socket));
+            }
+        } catch (IOException e) {
+            throw new ServerException(e);
+        }
     }
 
     /**
      * Stops server
-     * @throws IOException if failed to close internal socket
+     * @throws ServerException if failed to close internal socket
      */
-    public void stop() throws IOException {
+    public void stop() throws ServerException {
         try {
-            connectionAcceptor.join();
-            serverSocket.close();
             executorService.shutdown();
+            serverSocket.close();
             log.info("Stopped server");
-        } catch (InterruptedException e) {
+        } catch (IOException e) {
             throw new ServerException(e);
         }
     }
@@ -109,6 +104,12 @@ public class SimpleServer {
                             break;
                         }
 
+                        case CLOSE : {
+                            socket.close();
+                            log.info(String.format("Closed connection from %s", socket.getInetAddress()));
+                            break;
+                        }
+
                         default : {
                             throw new ServerException("Unknown type of request!");
                         }
@@ -119,7 +120,6 @@ public class SimpleServer {
                     throw new ServerException(e);
                 }
             }
-
         }
 
         private void handleList(String path) throws IOException {

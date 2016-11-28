@@ -6,6 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import ru.spbau.mit.client.SimpleClient;
+import ru.spbau.mit.exceptions.ServerException;
 import ru.spbau.mit.server.SimpleServer;
 
 import java.io.File;
@@ -26,16 +27,14 @@ public class SimpleClientServerTest {
     private Thread serverThread = new Thread (() -> {
         try {
             server.start(8080);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (ServerException e) {
+            fail(e.getMessage());
         }
     });
 
     @Before
     public void setUp() throws Exception {
         serverThread.start();
-        //shitty hack to ensure, that server launches before client connects to him
-        //Thread.sleep(1000);
         client.connect("localhost", 8080);
     }
 
@@ -48,10 +47,9 @@ public class SimpleClientServerTest {
     }
 
     @Test
-    public void testEmptyDirectoryList() throws Exception {
-        Map<String, Boolean> expected = Collections.EMPTY_MAP;
+    public void testNonExistingDirectoryList() throws Exception {
         Map<String, Boolean> actual = client.executeList("src/test/resources/b");
-        assertEquals(expected, actual);
+        assertNull(actual);
     }
 
     @Test
