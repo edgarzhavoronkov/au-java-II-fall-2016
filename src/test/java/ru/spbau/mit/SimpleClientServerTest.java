@@ -21,6 +21,7 @@ import static org.junit.Assert.*;
  * Created by Эдгар on 15.10.2016.
  */
 public class SimpleClientServerTest {
+    private final int port = 8000 + new Random().nextInt(100);
     private final SimpleServer server = new SimpleServer();
     private final SimpleClient client = new SimpleClient();
 
@@ -74,7 +75,6 @@ public class SimpleClientServerTest {
 
         Map<String, Boolean> expected = new HashMap<>();
         expected.put("a", true);
-        expected.put("b", true);
         expected.put("res", false);
 
         CyclicBarrier barrier = new CyclicBarrier(10);
@@ -115,6 +115,6 @@ public class SimpleClientServerTest {
     @After
     public void tearDown() throws Exception {
         client.disconnect();
-        serverThread.join();
+        serverThread.interrupt();
     }
 }

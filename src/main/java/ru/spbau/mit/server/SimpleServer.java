@@ -48,12 +48,13 @@ public class SimpleServer {
     public void start(int port) throws ServerException {
         try {
             serverSocket = new ServerSocket(port);
+            serverSocket.setSoTimeout(1000);
             executorService = Executors.newCachedThreadPool();
             log.info(String.format("Started server at %s", serverSocket.getInetAddress()));
             while (!serverSocket.isClosed()) {
                 Socket socket = serverSocket.accept();
                 log.info(String.format("Accepted connection from %s", socket.getInetAddress()));
-                executorService.submit(new ConnectionHandler(socket));
+                executorService.execute(new ConnectionHandler(socket));
             }
         } catch (IOException e) {
             throw new ServerException(e);
@@ -71,6 +72,8 @@ public class SimpleServer {
             log.info("Stopped server");
         } catch (IOException e) {
             throw new ServerException(e);
+        } finally {
+            serverSocket = null;
         }
     }
 
@@ -82,6 +85,7 @@ public class SimpleServer {
 
         ConnectionHandler(Socket socket) throws IOException {
             this.socket = socket;
+            this.socket.setSoTimeout(1000);
             inputStream = new DataInputStream(socket.getInputStream());
             outputStream = new DataOutputStream(socket.getOutputStream());
         }
@@ -96,11 +100,15 @@ public class SimpleServer {
                     switch (requestType) {
                         case LIST : {
                             handleList(path);
+                            outputStream.flush();
+                            log.info("Reply for list request is sent");
                             break;
                         }
 
                         case GET : {
                             handleGet(path);
+                            outputStream.flush();
+                            log.info("Reply for get request is sent");
                             break;
                         }
 
@@ -114,8 +122,7 @@ public class SimpleServer {
                             throw new ServerException("Unknown type of request!");
                         }
                     }
-                    outputStream.flush();
-                    log.info(String.format("Reply for %s request is sent", requestType.toString()));
+
                 } catch (IOException e) {
                     throw new ServerException(e);
                 }

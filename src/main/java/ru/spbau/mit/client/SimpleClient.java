@@ -49,6 +49,7 @@ public class SimpleClient {
         sendRequest(RequestType.CLOSE, "");
         clientSocket.close();
         log.info(String.format("Disconnected from %s", clientSocket.getInetAddress()));
+        clientSocket = null;
     }
 
     /**
