@@ -21,7 +21,6 @@ import static org.junit.Assert.*;
  * Created by Эдгар on 15.10.2016.
  */
 public class SimpleClientServerTest {
-    private final int port = 8000 + new Random().nextInt(100);
     private final SimpleServer server = new SimpleServer();
     private final SimpleClient client = new SimpleClient();
 
