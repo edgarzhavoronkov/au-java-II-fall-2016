@@ -2,14 +2,21 @@ package ru.spbau.mit.torrent.utils;
 
 import lombok.Data;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 /**
  * Created by Эдгар on 30.10.2016.
  */
 @Data
 public class FileInfo {
-    private long fileId;
-    private String name;
-    private long size;
+    private final long fileId;
+    private final String name;
+    private final long size;
 
-    //TODO
+    public void writeTo(DataOutputStream dataOutputStream) throws IOException {
+        dataOutputStream.writeLong(fileId);
+        dataOutputStream.writeUTF(name);
+        dataOutputStream.writeLong(size);
+    }
 }

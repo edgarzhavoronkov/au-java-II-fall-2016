@@ -1,83 +1,115 @@
 package ru.spbau.mit.torrent.tracker;
 
 import lombok.extern.log4j.Log4j2;
-import ru.spbau.mit.torrent.exceptions.TrackerStartFailException;
-import ru.spbau.mit.torrent.exceptions.TrackerStopFailException;
+import ru.spbau.mit.torrent.common.AbstractServer;
+import ru.spbau.mit.torrent.exceptions.*;
 import ru.spbau.mit.torrent.io.TrackerSerializer;
 import ru.spbau.mit.torrent.utils.ClientInfo;
 import ru.spbau.mit.torrent.utils.FileInfo;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.InetAddress;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by Эдгар on 30.10.2016.
  */
 @Log4j2
-public class Tracker {
-    private static final String workingDir = System.getProperty("user.dir");
-    public static final int trackerPort = 8081;
+public class Tracker extends AbstractServer {
+    public static final int TRACKER_PORT = 8081;
 
-    //fileId to active client, if he has part of file or whole file
-    private Map<Long, InetSocketAddress> clients;
-    private ServerSocket trackerSocket;
-    private ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private long maxID;
+    private final String workingDir;
+    private final List<FileInfo> files;
+    private final Set<ClientInfo> clients = new HashSet<>();
 
-    //checks if his state can be deserialized from disk
-    //if yes, reads it and starts
+
+    public Tracker(String workingDir) throws SerializationException {
+        log.info("Creating tracker");
+        this.workingDir = workingDir;
+        files = TrackerSerializer.loadFiles(workingDir);
+        maxID = files.isEmpty() ? 0 : files.get(files.size() - 1).getFileId();
+    }
+
     public void start() throws TrackerStartFailException {
         try {
-            trackerSocket = new ServerSocket(trackerPort);
-            log.info("Started tracker on port " + trackerPort);
-            //check before reading
-            clients = TrackerSerializer.loadClients();
-            //not here?
-            while (!trackerSocket.isClosed()) {
-                Socket incoming = trackerSocket.accept();
-                executorService.execute(new ConnectionHandler(incoming));
-            }
-
-        } catch (IOException e) {
+            super.start(TRACKER_PORT);
+        } catch (ServerStartFailException e) {
             throw new TrackerStartFailException(e);
         }
     }
 
-    //dumps it's state on disk then shutdowns
+    @Override
     public void stop() throws TrackerStopFailException {
-        TrackerSerializer.saveClients(clients, "");
         try {
-            log.info("Trying to stop tracker");
-            trackerSocket.close();
-            executorService.shutdown();
-        } catch (IOException e) {
+            TrackerSerializer.saveFiles(workingDir, files);
+            super.stop();
+        } catch (SerializationException | ServerStopFailException e) {
             throw new TrackerStopFailException(e);
-        } finally {
-            log.info("Stopped tracker");
-            trackerSocket = null;
         }
     }
 
-    //TODO
+    @Override
+    protected void handleRequest(InetAddress inetAddress, DataInputStream in, DataOutputStream out) throws IOException {
+        TrackerRequest request = TrackerRequest.values()[in.readInt()];
+        switch (request) {
+            case LIST : {
+                log.info("Handling list request");
+                out.writeInt(files.size());
+                for (FileInfo file : files) {
+                    out.writeLong(file.getFileId());
+                    out.writeUTF(file.getName());
+                    out.writeLong(file.getSize());
+                }
+                break;
+            }
 
-    private List<FileInfo> handleList() {
-        return null;
-    }
+            case SOURCES: {
+                log.info("Handling sources request");
+                long fileID = in.readLong();
+                List<ClientInfo> sources = clients
+                        .stream()
+                        .filter(client -> client.hasFile(fileID) && client.isActive())
+                        .collect(Collectors.toList());
+                out.writeInt(sources.size());
+                for (ClientInfo client : sources) {
+                    out.write(client.getAddress());
+                    out.writeInt(client.getPort());
+                }
+                break;
+            }
 
-    private long handleUpload() {
-        return 0;
-    }
+            case UPDATE: {
+                log.info("Handling update request");
+                int port = in.readInt();
+                ClientInfo client = new ClientInfo(inetAddress.getAddress(), port);
+                clients.remove(client);
+                int count = in.readInt();
+                for (int i =0; i < count; ++i) {
+                    long fileID = in.readLong();
+                    client.addFile(fileID);
+                }
+                clients.add(client);
+                out.writeBoolean(true);
 
-    private List<ClientInfo> handleSources() {
-        return null;
-    }
+                break;
+            }
 
-    private boolean handleUpdate() {
-        return false;
+            case UPLOAD: {
+                log.info("Handling upload request");
+                long newID = maxID + 1;
+                maxID = newID;
+                String name = in.readUTF();
+                long size = in.readLong();
+                files.add(new FileInfo(newID, name, size));
+                out.writeLong(newID);
+                break;
+            }
+        }
     }
 }

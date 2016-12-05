@@ -1,5 +1,6 @@
 package ru.spbau.mit.torrent.tracker;
 
+import ru.spbau.mit.torrent.exceptions.SerializationException;
 import ru.spbau.mit.torrent.exceptions.TrackerStartFailException;
 import ru.spbau.mit.torrent.exceptions.TrackerStopFailException;
 
@@ -8,10 +9,17 @@ import ru.spbau.mit.torrent.exceptions.TrackerStopFailException;
  */
 public class TrackerMain {
     public static void main(String[] args) {
-        final Tracker tracker = new Tracker();
+        Tracker tracker = null;
+        try {
+            tracker = new Tracker(System.getProperty("user.dir"));
+        } catch (SerializationException e) {
+            System.err.println(e.getMessage());
+            System.exit(-1);
+        }
+        Tracker finalTracker = tracker;
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
-                tracker.stop();
+                finalTracker.stop();
             } catch (TrackerStopFailException e) {
                 System.err.println(e.getMessage());
             }
@@ -19,7 +27,6 @@ public class TrackerMain {
 
         try {
             tracker.start();
-            //smth more?
             tracker.stop();
         } catch (TrackerStartFailException | TrackerStopFailException e) {
             System.err.println(e.getMessage());

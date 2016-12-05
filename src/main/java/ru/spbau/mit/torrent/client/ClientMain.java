@@ -1,9 +1,14 @@
 package ru.spbau.mit.torrent.client;
 
+import ru.spbau.mit.torrent.exceptions.ClientStartFailException;
+import ru.spbau.mit.torrent.exceptions.ClientStopFailedException;
+import ru.spbau.mit.torrent.exceptions.ListFailException;
+import ru.spbau.mit.torrent.exceptions.UploadFailException;
 import ru.spbau.mit.torrent.tracker.Tracker;
 import ru.spbau.mit.torrent.utils.FileInfo;
 
 import java.io.DataInputStream;
+import java.io.FileNotFoundException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -14,7 +19,6 @@ import java.util.Scanner;
  * Created by Эдгар on 30.10.2016.
  */
 public class ClientMain {
-    // TODO
     public static void main(String[] args) {
         if (args.length != 2) {
             System.out.println("Usage: ClientMain <tracker ip> <port>");
@@ -22,10 +26,11 @@ public class ClientMain {
         }
 
         try {
-            InetAddress trackerAddress = InetAddress.getByName(args[0]);
-            InetSocketAddress trackerSocketAddress = new InetSocketAddress(trackerAddress, Tracker.trackerPort);
-            Client client = new Client();
-            client.connect(trackerSocketAddress);
+            InetSocketAddress trackerAddress = new InetSocketAddress(InetAddress.getByName(args[0]), Tracker.TRACKER_PORT);
+            int port = Integer.parseInt(args[1]);
+            Client client = new Client(trackerAddress);
+
+            client.start(port);
 
             Scanner scanner = new Scanner(System.in);
             printUsage();
@@ -35,7 +40,7 @@ public class ClientMain {
                 switch (splitInput[0]) {
                     case "list": {
                         List<FileInfo> res = client.executeList();
-                        System.out.println("Id:\tFileName:\tSize:");
+                        System.out.println("Id:\tName:\tSize:");
                         for (FileInfo file : res) {
                             System.out.println(file.getFileId() + '\t' + file.getName() + '\t' + file.getSize());
                         }
@@ -46,8 +51,8 @@ public class ClientMain {
                         String filename;
                         try {
                             filename = splitInput[1];
-                            long id = client.executeUpload(filename);
-                            System.out.println("Uploaded file " + filename + " with id=" + id);
+                            client.executeUpload(filename);
+                            System.out.println("Uploaded file " + filename);
                         } catch (ArrayIndexOutOfBoundsException e) {
                             System.err.println(e.getMessage());
                             printUsage();
@@ -73,7 +78,7 @@ public class ClientMain {
                     }
 
                     case "exit": {
-                        client.disconnect();
+                        client.stop();
                         System.exit(0);
                     }
 
@@ -82,7 +87,13 @@ public class ClientMain {
                     }
                 }
             }
-        } catch (UnknownHostException e) {
+            // еще пара исключений и я напишу вместо них Exception e...
+        } catch (UnknownHostException
+                | ClientStopFailedException
+                | UploadFailException
+                | FileNotFoundException
+                | ClientStartFailException
+                | ListFailException e) {
             System.err.println(e.getMessage());
         }
     }
