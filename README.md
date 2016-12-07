@@ -3,12 +3,9 @@
 Console-based torrent-tracker and client
 
 
-##### Compiling:
-Just use `mvn compile` it should do all the work
-
-##### Running:
-Use `mvn exec:java -Dexec.mainClass="ru.spbau.mit.torrent.tracker.TrackerMain"` to create server at your host
-Or `mvn exec:java -Dexec.mainClass="ru.spbau.mit.torrent.client.ClientMain" -Dexec.args="--port [-p] port_num"` to run client on your host at port `port_num` 
+##### Building:
+Just use `mvn package` which will build two executable jars `client.jar` and `tracker.jar`
+` 
  
 More details to follow....
 
