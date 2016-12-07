@@ -4,6 +4,8 @@ import ru.spbau.mit.torrent.exceptions.SerializationException;
 import ru.spbau.mit.torrent.exceptions.TrackerStartFailException;
 import ru.spbau.mit.torrent.exceptions.TrackerStopFailException;
 
+import java.util.Scanner;
+
 /**
  * Created by Эдгар on 30.10.2016.
  */
@@ -27,7 +29,14 @@ public class TrackerMain {
 
         try {
             tracker.start();
-            tracker.stop();
+            Scanner scanner = new Scanner(System.in);
+            while (true) {
+                String input = scanner.nextLine();
+                if ("exit".equals(input)) {
+                    tracker.stop();
+                    return;
+                }
+            }
         } catch (TrackerStartFailException | TrackerStopFailException e) {
             System.err.println(e.getMessage());
         }

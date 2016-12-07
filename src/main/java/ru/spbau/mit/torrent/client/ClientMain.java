@@ -62,12 +62,11 @@ public class ClientMain {
 
                     case "get": {
                         Long fileId;
-                        Integer partNum;
+                        Integer chunk;
                         try {
                             fileId = Long.parseLong(splitInput[1]);
-                            partNum = Integer.parseInt(splitInput[2]);
-                            DataInputStream dis = client.executeGet(fileId, partNum);
-                            //TODO: save bytes from part into corresponding file info
+                            chunk = Integer.parseInt(splitInput[2]);
+                            client.executeGet(fileId, chunk);
                         } catch (IndexOutOfBoundsException e) {
                             System.err.println(e.getMessage());
                             printUsage();

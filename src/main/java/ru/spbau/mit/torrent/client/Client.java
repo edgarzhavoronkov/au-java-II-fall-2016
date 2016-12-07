@@ -107,8 +107,9 @@ public class Client extends AbstractServer {
         }
     }
 
-    public DataInputStream executeGet(Long fileId, Integer partNum) {
-        return null;
+    public void executeGet(Long fileId, Integer chunk) {
+        // TODO : download?
+        files.get(fileId).getChunks().add(chunk);
     }
 
     @Override
