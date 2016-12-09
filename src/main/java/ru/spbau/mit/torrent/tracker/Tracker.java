@@ -18,32 +18,50 @@ import java.util.stream.Collectors;
 
 /**
  * Created by Эдгар on 30.10.2016.
+ * Concrete implementation for server of tracker
  */
 @Log4j2
 public class Tracker extends AbstractServer {
     public static final int TRACKER_PORT = 8081;
 
+    private List<FileInfo> files;
+
     private long maxID;
     private final String workingDir;
-    private final List<FileInfo> files;
     private final Set<ClientInfo> clients = new HashSet<>();
 
-
+    /**
+     * Creates tracker in given working directory and
+     * reads it's state from disk
+     * @param workingDir path to working directory
+     * @throws SerializationException if failed to load state
+     */
     public Tracker(String workingDir) throws SerializationException {
         log.info("Creating tracker");
         this.workingDir = workingDir;
-        files = TrackerSerializer.loadFiles(workingDir);
         maxID = files.isEmpty() ? 0 : files.get(files.size() - 1).getFileId();
     }
 
+    /**
+     * Reads tracker state from disk and
+     * start server on tracker's port
+     * @throws TrackerStartFailException if server stuff failed
+     * to start or deserialization failed
+     */
     public void start() throws TrackerStartFailException {
         try {
+            files = TrackerSerializer.loadFiles(workingDir);
             super.start(TRACKER_PORT);
-        } catch (ServerStartFailException e) {
+        } catch (SerializationException | ServerStartFailException e) {
             throw new TrackerStartFailException(e);
         }
     }
 
+    /**
+     * Saves tracker state to disk and stops server
+     * @throws TrackerStopFailException if server stuff failed to stop
+     * or serialization failed
+     */
     @Override
     public void stop() throws TrackerStopFailException {
         try {

@@ -18,12 +18,19 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Created by Эдгар on 04.12.2016.
+ * Abstract server implementation
+ * Since tracker and client both act as a server, it's convenient
+ * to have such thing
+ * Since we do not want to block user thread we implement Runnable
+ * and submit this in thread pool
  */
 @Log4j2
 public abstract class AbstractServer implements Runnable {
     protected ServerSocket serverSocket;
     protected int localPort;
-    protected final ScheduledExecutorService service = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+    protected final ScheduledExecutorService service = Executors.newScheduledThreadPool(
+            Runtime.getRuntime().availableProcessors()
+    );
 
     protected void start(int port) throws ServerStartFailException {
         log.info("Started server at port " + port);
@@ -44,6 +51,9 @@ public abstract class AbstractServer implements Runnable {
         service.shutdown();
     }
 
+    /**
+     * Does all the job with handling connections
+     */
     @Override
     public void run() {
         try {

@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Эдгар on 09.11.2016.
+ * Information about client, address, port et cetera
  */
 @EqualsAndHashCode
 public class ClientInfo {
@@ -20,7 +21,11 @@ public class ClientInfo {
 
     private final Set<Long> files = new HashSet<>();
 
-
+    /**
+     * Creates client info with given address and port
+     * @param address client address
+     * @param port client port
+     */
     public ClientInfo(byte[] address, int port) {
         this.address = address;
         this.port = port;

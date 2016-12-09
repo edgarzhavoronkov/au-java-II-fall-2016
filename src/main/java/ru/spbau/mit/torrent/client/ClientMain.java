@@ -1,13 +1,9 @@
 package ru.spbau.mit.torrent.client;
 
-import ru.spbau.mit.torrent.exceptions.ClientStartFailException;
-import ru.spbau.mit.torrent.exceptions.ClientStopFailedException;
-import ru.spbau.mit.torrent.exceptions.ListFailException;
-import ru.spbau.mit.torrent.exceptions.UploadFailException;
+import ru.spbau.mit.torrent.exceptions.*;
 import ru.spbau.mit.torrent.tracker.Tracker;
 import ru.spbau.mit.torrent.utils.FileInfo;
 
-import java.io.DataInputStream;
 import java.io.FileNotFoundException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -17,6 +13,7 @@ import java.util.Scanner;
 
 /**
  * Created by Эдгар on 30.10.2016.
+ * Primitive REPL for client
  */
 public class ClientMain {
     public static void main(String[] args) {
@@ -62,11 +59,9 @@ public class ClientMain {
 
                     case "get": {
                         Long fileId;
-                        Integer chunk;
                         try {
                             fileId = Long.parseLong(splitInput[1]);
-                            chunk = Integer.parseInt(splitInput[2]);
-                            client.executeGet(fileId, chunk);
+                            client.executeGet(fileId);
                         } catch (IndexOutOfBoundsException e) {
                             System.err.println(e.getMessage());
                             printUsage();
@@ -86,13 +81,14 @@ public class ClientMain {
                     }
                 }
             }
-            // еще пара исключений и я напишу вместо них Exception e...
+            // look at dis fucking bunch of exceptions
         } catch (UnknownHostException
                 | ClientStopFailedException
                 | UploadFailException
                 | FileNotFoundException
                 | ClientStartFailException
-                | ListFailException e) {
+                | ListFailException
+                | GetFailException e) {
             System.err.println(e.getMessage());
         }
     }

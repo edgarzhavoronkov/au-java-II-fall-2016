@@ -8,9 +8,10 @@ import java.util.Set;
 
 /**
  * Created by Эдгар on 05.12.2016.
+ * Abstraction for file and it's chunks
  */
 public class TorrentFile {
-    private static final long CHUNK_SIZE = 10 * 1024 * 1024; // 10 Megabytes
+    public static final int CHUNK_SIZE = 10 * 1024; // 10 Megabytes
 
     @Getter
     private final File file;
@@ -19,18 +20,31 @@ public class TorrentFile {
     @Getter
     private final long fileID;
     @Getter
-    private transient final Set<Integer> chunks = new HashSet<>();
+    private final Set<Integer> chunks = new HashSet<>();
 
-    public TorrentFile(File file, long size, long fileID) {
+    private TorrentFile(File file, long size, long fileID) {
         this.file = file;
         this.size = size;
         this.fileID = fileID;
     }
 
+    /**
+     * Creates empty(with no chunks) file from given FileInfo
+     * @param info information about file
+     * @param file file itself
+     * @return result
+     */
     public static TorrentFile empty(FileInfo info, File file) {
         return new TorrentFile(file, info.getSize(), info.getFileId());
     }
 
+    /**
+     * Creates file with all chunks in it
+     * @param file file itself
+     * @param size size
+     * @param fileID ID
+     * @return result
+     */
     public static TorrentFile full(File file, long size, long fileID) {
         TorrentFile res = new TorrentFile(file, size, fileID);
         for (int i = 0; i < res.chunksCount(); ++i) {
@@ -39,21 +53,39 @@ public class TorrentFile {
         return res;
     }
 
-    private void addChunk(int chunk) {
+    /**
+     * Checks if file has all of chunks
+     * @return true if yes and false otherwise
+     */
+    public boolean isFull() {
+        return chunksCount() == chunks.size();
+    }
+
+    /**
+     * Adds chunk with given number
+     * @param chunk chunk's number
+     */
+    public void addChunk(int chunk) {
         chunks.add(chunk);
     }
 
-    private int chunksCount() {
-        return (int) Math.ceil((size * 1.0) / CHUNK_SIZE);
-    }
-
-    private long getChunkSize(int chunk) {
+    /**
+     * Gets size of given chunk
+     * @param chunk chunk's number
+     * @return CHUNK_SIZE if chunk is not last and
+     * residual size otherwise
+     */
+    public int getChunkSize(int chunk) {
         if (chunk >= chunksCount()) {
             return 0;
         }
         if (chunk < chunksCount() - 1) {
             return CHUNK_SIZE;
         }
-        return size - (chunk  * CHUNK_SIZE);
+        return (int) (size - (chunk  * CHUNK_SIZE));
+    }
+
+    private int chunksCount() {
+        return (int) Math.ceil((size * 1.0) / CHUNK_SIZE);
     }
 }

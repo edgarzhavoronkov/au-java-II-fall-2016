@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 /**
  * Created by Эдгар on 30.10.2016.
+ * REPL class for tracker
  */
 public class TrackerMain {
     public static void main(String[] args) {

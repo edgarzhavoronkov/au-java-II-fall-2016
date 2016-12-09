@@ -9,17 +9,21 @@ import ru.spbau.mit.torrent.utils.FileInfo;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Эдгар on 28.11.2016.
+ * Class for serializing tracker's state to json
  */
 @Log4j2
 public class TrackerSerializer {
+    /**
+     * Loads state from disk
+     * @param workingDir working directory with file
+     * @return map from file id to client info
+     * @throws SerializationException if IO failed
+     */
     public static List<FileInfo> loadFiles(String workingDir) throws SerializationException {
         log.info("Loading stored files");
         File stored = new File(workingDir, "tracker_files.json");
@@ -36,6 +40,12 @@ public class TrackerSerializer {
         }
     }
 
+    /**
+     * Saves state to disk
+     * @param workingDir working directory with file
+     * @param files map from file id to client info
+     * @throws SerializationException if IO failed
+     */
     public static void saveFiles(String workingDir, List<FileInfo> files) throws SerializationException {
         log.info("Saving stored files");
         File stored = new File(workingDir, "tracker_files.json");
