@@ -1,0 +1,42 @@
+package ru.spbau.mit.server;
+
+import ru.spbau.mit.exceptions.ServerException;
+
+/**
+ * Created by Эдгар on 08.10.2016.
+ * Server-side main.
+ */
+public class ServerMain {
+    public static void main(String[] args) {
+        if (args.length != 1) {
+            System.err.println("Usage: ServerMain port_number");
+            System.exit(-1);
+        }
+        int port = Integer.parseInt(args[0]);
+        SimpleServer server = new SimpleServer();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(
+                () -> {
+                    try {
+                        server.stop();
+                    } catch (ServerException e) {
+                        System.err.println(e.getMessage());
+                        System.exit(-1);
+                    }
+                }
+        ));
+
+        try {
+            server.start(port);
+        } catch (ServerException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                server.stop();
+            } catch (ServerException e) {
+                System.err.println(e.getMessage());
+                System.exit(-1);
+            }
+        }
+    }
+}
