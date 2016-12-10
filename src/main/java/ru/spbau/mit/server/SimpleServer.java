@@ -72,8 +72,6 @@ public class SimpleServer {
             log.info("Stopped server");
         } catch (IOException e) {
             throw new ServerException(e);
-        } finally {
-            serverSocket = null;
         }
     }
 
