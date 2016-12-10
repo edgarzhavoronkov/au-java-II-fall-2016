@@ -4,6 +4,7 @@ import ru.spbau.mit.exceptions.BranchCreateFailException;
 import ru.spbau.mit.exceptions.BranchDeleteFailException;
 import ru.spbau.mit.exceptions.CommandFailException;
 import ru.spbau.mit.exceptions.CoreException;
+import ru.spbau.mit.model.Branch;
 import ru.spbau.mit.model.core.VcsCore;
 
 /**
@@ -20,6 +21,18 @@ public class BranchCmd implements Command {
      */
     @Override
     public String execute(VcsCore core, String[] args) throws CommandFailException {
+        if (args.length == 0) {
+            StringBuilder res = new StringBuilder();
+            for (Branch b : core.getBranches()) {
+                res.append(b.getName());
+                if (core.getCurrentBranch().equals(b)) {
+                    res.append('*');
+                }
+                res.append('\n');
+            }
+            return res.toString();
+        }
+
         if (args.length != 2) {
             return getUsage();
         }
@@ -27,7 +40,6 @@ public class BranchCmd implements Command {
             case "-c" :
                 try {
                     core.createBranch(args[1]);
-                    core.checkoutBranch(args[1]);
                     return String.format("Created branch %s", args[1]);
                 } catch (CoreException e) {
                     throw new BranchCreateFailException(e);

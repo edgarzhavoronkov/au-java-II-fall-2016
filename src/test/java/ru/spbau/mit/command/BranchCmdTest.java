@@ -27,7 +27,6 @@ public class BranchCmdTest {
     public void setUp() throws Exception {
         branch = new BranchCmd();
         doNothing().when(core).createBranch(anyString());
-        doNothing().when(core).checkoutBranch(anyString());
         doNothing().when(core).removeBranch(anyString());
     }
 

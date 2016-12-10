@@ -131,7 +131,7 @@ public class Repository {
                 if (file.exists()) {
                     String hash = FileSystem.getNewHash(file);
                     snapshot.addFile(filename, hash);
-                    File dataFile = new File(getDataDirectory(), "data");
+                    File dataFile = new File(getDataDirectory(), hash);
                     if (!dataFile.exists()) {
                         FileUtils.copyFile(file, dataFile);
                     }
