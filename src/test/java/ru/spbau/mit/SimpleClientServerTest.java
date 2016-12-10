@@ -32,6 +32,7 @@ public class SimpleClientServerTest {
         }
     });
 
+
     @Before
     public void setUp() throws Exception {
         serverThread.start();

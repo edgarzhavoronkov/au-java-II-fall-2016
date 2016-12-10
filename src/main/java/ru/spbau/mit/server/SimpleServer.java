@@ -48,7 +48,6 @@ public class SimpleServer {
     public void start(int port) throws ServerException {
         try {
             serverSocket = new ServerSocket(port);
-            serverSocket.setSoTimeout(1000);
             executorService = Executors.newCachedThreadPool();
             log.info(String.format("Started server at %s", serverSocket.getInetAddress()));
             while (!serverSocket.isClosed()) {
@@ -83,7 +82,6 @@ public class SimpleServer {
 
         ConnectionHandler(Socket socket) throws IOException {
             this.socket = socket;
-            this.socket.setSoTimeout(1000);
             inputStream = new DataInputStream(socket.getInputStream());
             outputStream = new DataOutputStream(socket.getOutputStream());
         }
