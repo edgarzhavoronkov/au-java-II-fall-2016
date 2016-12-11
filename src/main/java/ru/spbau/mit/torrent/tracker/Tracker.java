@@ -39,7 +39,6 @@ public class Tracker extends AbstractServer {
     public Tracker(String workingDir) throws SerializationException {
         log.info("Creating tracker");
         this.workingDir = workingDir;
-        maxID = files.isEmpty() ? 0 : files.get(files.size() - 1).getFileId();
     }
 
     /**
@@ -51,6 +50,7 @@ public class Tracker extends AbstractServer {
     public void start() throws TrackerStartFailException {
         try {
             files = TrackerSerializer.loadFiles(workingDir);
+            maxID = files.isEmpty() ? 0 : files.get(files.size() - 1).getFileId();
             super.start(TRACKER_PORT);
         } catch (SerializationException | ServerStartFailException e) {
             throw new TrackerStartFailException(e);

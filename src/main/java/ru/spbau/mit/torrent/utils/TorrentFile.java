@@ -11,7 +11,7 @@ import java.util.Set;
  * Abstraction for file and it's chunks
  */
 public class TorrentFile {
-    public static final int CHUNK_SIZE = 10 * 1024; // 10 Megabytes
+    public static final int CHUNK_SIZE = 10 * 1024 * 1024; // 10 Megabytes
 
     @Getter
     private final File file;
