@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="INFO">
     <Properties>
-        <Property name="tracker_log">target/tracker.log</Property>
-        <Property name="client_log">target/client.log</Property>
+        <Property name="tracker_log">logs/tracker.log</Property>
+        <Property name="client_log">logs/client.log</Property>
     </Properties>
 
     <Appenders>

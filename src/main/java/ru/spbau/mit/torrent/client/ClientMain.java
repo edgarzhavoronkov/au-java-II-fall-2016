@@ -39,7 +39,7 @@ public class ClientMain {
                         List<FileInfo> res = client.executeList();
                         System.out.println("Id:\tName:\tSize:");
                         for (FileInfo file : res) {
-                            System.out.println(file.getFileId() + '\t' + file.getName() + '\t' + file.getSize());
+                            System.out.printf("%d\t%s\t%d\n", file.getFileId() , file.getName(), file.getSize());
                         }
                         break;
                     }
