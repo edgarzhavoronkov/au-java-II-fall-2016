@@ -38,7 +38,7 @@ public class Client extends AbstractServer {
      * @param trackerAddress - address of torrent tracker
      */
     public Client(InetSocketAddress trackerAddress) {
-        this(trackerAddress, System.getProperty("user,dir"));
+        this(trackerAddress, System.getProperty("user.dir"));
     }
 
     /**
