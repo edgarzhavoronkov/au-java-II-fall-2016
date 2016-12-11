@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+    <Properties>
+        <Property name="tracker_log">target/tracker.log</Property>
+        <Property name="client_log">target/client.log</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="CONSOLE" target="SYSTEM_ERR">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+        </Console>
+
+        <File name="SERVER" fileName="${tracker_log}">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+        </File>
+
+        <File name="CLIENT" fileName="${client_log}">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+        </File>
+    </Appenders>
+    <Loggers>
+        <Root level="error">
+            <AppenderRef ref="CONSOLE" />
+        </Root>
+        <logger name="ru.spbau.mit.torrent.tracker.Tracker" level="INFO" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+        </logger>
+
+        <logger name="ru.spbau.mit.torrent.client.Client" level="INFO" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+        </logger>
+    </Loggers>
+</Configuration>
