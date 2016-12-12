@@ -1,4 +1,5 @@
 .idea/*
 target/*
 sandbox
+logs
 src/test/resources/*
