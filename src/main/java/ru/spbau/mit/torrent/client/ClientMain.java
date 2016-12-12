@@ -94,6 +94,6 @@ public class ClientMain {
     }
 
     private static void printUsage() {
-        System.out.println("Usage: list | upload <file_path> | get <file_id> <part_num> | exit");
+        System.out.println("Usage: list | upload <file_path> | get <file_id> | exit");
     }
 }

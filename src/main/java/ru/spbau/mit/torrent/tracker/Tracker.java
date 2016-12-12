@@ -114,7 +114,6 @@ public class Tracker extends AbstractServer {
                 }
                 clients.add(client);
                 out.writeBoolean(true);
-
                 break;
             }
 
