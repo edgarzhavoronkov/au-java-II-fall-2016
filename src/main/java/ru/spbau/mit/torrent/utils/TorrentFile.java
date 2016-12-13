@@ -21,6 +21,8 @@ public class TorrentFile {
     private final long fileID;
     @Getter
     private final Set<Integer> chunks = new HashSet<>();
+    @Getter
+    private final Set<Integer> chunksInProgress = new HashSet<>();
 
     private TorrentFile(File file, long size, long fileID) {
         this.file = file;
@@ -62,10 +64,19 @@ public class TorrentFile {
     }
 
     /**
+     * Adds chunk with given number to in-progress queue
+     * @param chunk chunk to add
+     */
+    public synchronized void startDownload(Integer chunk) {
+        chunksInProgress.add(chunk);
+    }
+
+    /**
      * Adds chunk with given number
      * @param chunk chunk's number
      */
-    public void addChunk(int chunk) {
+    public synchronized void addChunk(int chunk) {
+        chunksInProgress.remove(chunk);
         chunks.add(chunk);
     }
 
@@ -85,7 +96,11 @@ public class TorrentFile {
         return (int) (size - (chunk  * CHUNK_SIZE));
     }
 
-    private int chunksCount() {
+    /**
+     * Returns number of chunks of given file
+     * @return number of chunks of torrent file
+     */
+    public int chunksCount() {
         return (int) Math.ceil((size * 1.0) / CHUNK_SIZE);
     }
 }

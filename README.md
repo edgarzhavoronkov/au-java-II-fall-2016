@@ -4,8 +4,8 @@ Console-based torrent-tracker and client
 
 
 ##### Building:
-Just use `mvn package` which will build two executable jars `client.jar` and `tracker.jar`
-` 
+Just use `mvn package` which will build three executable jars `client.jar`, `client-ui.jar` and `tracker.jar`
+ 
  
 More details to follow....
 

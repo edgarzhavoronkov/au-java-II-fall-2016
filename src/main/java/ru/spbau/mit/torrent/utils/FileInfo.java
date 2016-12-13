@@ -14,4 +14,9 @@ public class FileInfo {
     private final long fileId;
     private final String name;
     private final long size;
+
+    @Override
+    public String toString() {
+        return String.format("%d\t%s\t%d", fileId, name, size);
+    }
 }

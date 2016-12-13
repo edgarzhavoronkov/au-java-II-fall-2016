@@ -15,6 +15,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -126,15 +127,25 @@ public class Client extends AbstractServer {
      * @throws UploadFailException if fails to send request to tracker
      */
     public void executeUpload(String filename) throws FileNotFoundException, UploadFailException {
-        File file = new File(workingDir, filename);
+        executeUpload(new File(workingDir, filename));
+    }
+
+    /**
+     * Uploads file for seeding. Needed for UI, since user can upload file
+     * that can lay beneath the root directory
+     * @param file File to upload
+     * @throws FileNotFoundException if file doesn't exist
+     * @throws UploadFailException if fails to send request to tracker
+     */
+    public void executeUpload(File file) throws UploadFailException, FileNotFoundException {
         if (!file.exists()) {
-            throw new FileNotFoundException(filename);
+            throw new FileNotFoundException(file.getName());
         }
         long size = file.length();
         try {
             sendRequest(trackerAddress, (input, output) -> {
                 output.writeInt(TrackerRequest.UPLOAD.ordinal());
-                output.writeUTF(filename);
+                output.writeUTF(file.getName());
                 output.writeLong(size);
 
                 long id = input.readLong();
@@ -156,7 +167,7 @@ public class Client extends AbstractServer {
         try {
             for (FileInfo fileInfo : executeList()) {
                 if (fileId == fileInfo.getFileId()) {
-                    getFile(fileInfo, new File(workingDir, fileInfo.getName()));
+                    getFile(fileInfo, new File(workingDir, fileInfo.getName()), null);
                     return;
                 }
             }
@@ -167,7 +178,22 @@ public class Client extends AbstractServer {
         }
     }
 
-    private void getFile(FileInfo info, File target) throws NoSeedsFoundException, LoadFailException {
+    /**
+     * Getter for UI needs
+     * @return all clients' files, downloading and seeding
+     */
+    public Collection<TorrentFile> getFiles() {
+        return files.values();
+    }
+
+    /**
+     * Another get for UI needs
+     * @param info - information about file to get
+     * @param target - file to write to
+     * @throws NoSeedsFoundException - if no seeds found
+     * @throws LoadFailException if loading failed
+     */
+    public void getFile(FileInfo info, File target, OnChunkDownload handler) throws NoSeedsFoundException, LoadFailException {
         TorrentFile torrentFile = files.get(info.getFileId());
         if (torrentFile == null) {
             torrentFile = TorrentFile.empty(info, target);
@@ -176,10 +202,10 @@ public class Client extends AbstractServer {
         if (torrentFile.isFull()) {
             return;
         }
-        loadFile(torrentFile);
+        loadFile(torrentFile, handler);
     }
 
-    private void loadFile(TorrentFile torrentFile) throws NoSeedsFoundException, LoadFailException {
+    private void loadFile(TorrentFile torrentFile, OnChunkDownload handler) throws NoSeedsFoundException, LoadFailException {
         List<InetSocketAddress> seeds = getSeeds(torrentFile.getFileID());
         if (seeds.isEmpty()) {
             throw new NoSeedsFoundException(torrentFile.getFile().getName());
@@ -187,7 +213,7 @@ public class Client extends AbstractServer {
 
         List<Future<?>> result = seeds
                 .stream()
-                .map(seed -> super.service.submit(new DownloadHandler(seed, torrentFile)))
+                .map(seed -> super.service.submit(new DownloadHandler(seed, torrentFile, handler)))
                 .collect(Collectors.toList());
 
         for (Future<?> future : result) {
@@ -283,6 +309,7 @@ public class Client extends AbstractServer {
     private final class DownloadHandler implements Runnable {
         private final InetSocketAddress seed;
         private final TorrentFile torrentFile;
+        private final OnChunkDownload handler;
 
         /**
          * Sends request to seed and does
@@ -295,9 +322,18 @@ public class Client extends AbstractServer {
                     List<Integer> chunks = getChunks(input, output);
 
                     for (Integer chunk : chunks) {
-                        if (!torrentFile.getChunks().contains(chunk)) {
+                        if (!torrentFile.getChunksInProgress().contains(chunk) && !torrentFile.getChunks().contains(chunk)) {
+                            torrentFile.startDownload(chunk);
                             loadChunk(chunk, input, output);
+                            if (handler != null) {
+                                handler.fire(torrentFile.getChunks().size(), torrentFile.chunksCount());
+                            }
                         }
+                    }
+                    try {
+                        sendUpdate();
+                    } catch (RequestSendFailException e) {
+                        throw new IOException(e);
                     }
                 });
             } catch (RequestSendFailException e) {
