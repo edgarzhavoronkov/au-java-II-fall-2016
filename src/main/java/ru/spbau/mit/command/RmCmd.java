@@ -1,6 +1,10 @@
 package ru.spbau.mit.command;
 
+import ru.spbau.mit.exceptions.CommandFailException;
+import ru.spbau.mit.exceptions.RemoveFailException;
 import ru.spbau.mit.model.core.VcsCore;
+
+import java.io.FileNotFoundException;
 
 /**
  * Created by Эдгар on 02.10.2016.
@@ -14,12 +18,16 @@ public class RmCmd implements Command {
      * @return message with number of removed files
      */
     @Override
-    public String execute(VcsCore core, String[] args) {
+    public String execute(VcsCore core, String[] args) throws CommandFailException {
         if (args.length == 0) {
             return getUsage();
         }
 
-        core.getRepository().removeFiles(args);
+        try {
+            core.getRepository().removeFiles(args);
+        } catch (FileNotFoundException e) {
+            throw new RemoveFailException(e);
+        }
         return String.format("Removed %d file(s)", args.length);
     }
 
