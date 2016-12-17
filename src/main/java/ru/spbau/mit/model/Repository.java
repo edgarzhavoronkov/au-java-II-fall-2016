@@ -31,7 +31,7 @@ public class Repository {
 
     /**
      * Constructor from working directory
-     * @param workingDirectory
+     * @param workingDirectory path to working directory
      */
     public Repository(String workingDirectory) {
         this.workingDirectory = workingDirectory;
@@ -170,6 +170,17 @@ public class Repository {
     }
 
     /**
+     * Literally, checks if given file is not outside the working directory
+     * @param filepath - path to file to check
+     * @return true - if yes, otherwise - false
+     */
+    public boolean isFileInRepo(String filepath) {
+        String fullPathToWorkingDirectory = Paths.get(new File(workingDirectory).getAbsolutePath()).normalize().toString();
+        String fullPathToFile = Paths.get(new File(filepath).getAbsolutePath()).normalize().toString();
+        return fullPathToFile.startsWith(fullPathToWorkingDirectory);
+    }
+
+    /**
      * Actual three-way merging algorithm
      * Gets all the changes in src , dst and
      * base commits and checks if there is conflicts,
@@ -256,17 +267,6 @@ public class Repository {
         String relativePath = FileSystem.getRelativePath(file, workingDirectory);
         trackedFiles.remove(relativePath);
         FileUtils.deleteQuietly(file);
-    }
-
-    /**
-     * Literally, checks if given file is not outside the working directory
-     * @param filepath - path to file to check
-     * @return true - if yes, otherwise - false
-     */
-    public boolean isFileInRepo(String filepath) {
-        String fullPathToWorkingDirectory = Paths.get(new File(workingDirectory).getAbsolutePath()).normalize().toString();
-        String fullPathToFile = Paths.get(new File(filepath).getAbsolutePath()).normalize().toString();
-        return fullPathToFile.startsWith(fullPathToWorkingDirectory);
     }
 
     private File getVcsFolder() {
