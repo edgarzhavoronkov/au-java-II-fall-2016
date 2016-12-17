@@ -4,6 +4,8 @@ import ru.spbau.mit.exceptions.AddFailException;
 import ru.spbau.mit.exceptions.CommandFailException;
 import ru.spbau.mit.model.core.VcsCore;
 
+import java.io.FileNotFoundException;
+
 /**
  * Created by Эдгар on 25.09.2016.
  * Implementation of {@link Command} interface for Add command
@@ -22,7 +24,11 @@ public class AddCmd implements Command {
                 throw new AddFailException(String.format("File %s lies out of vcs root folder", filepath));
             }
         }
-        core.getRepository().addFiles(args);
+        try {
+            core.getRepository().addFiles(args);
+        } catch (FileNotFoundException e) {
+            throw new AddFailException(e);
+        }
         return String.format("Added %d file(s)", args.length);
     }
 

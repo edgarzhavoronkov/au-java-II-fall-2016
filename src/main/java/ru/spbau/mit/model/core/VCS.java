@@ -80,13 +80,17 @@ public class VCS {
                     throw new InitFailedException("Repository has not been init!");
                 }
                 Command cmd = CommandProvider.forName(args[0]);
-                String[] arguments = new String[args.length - 1];
-                System.arraycopy(args, 1, arguments, 0, args.length - 1);
-                try {
-                    String output = cmd.execute(core, arguments);
-                    System.out.println(output);
-                } catch (CommandFailException e) {
-                    System.out.println(e.getMessage());
+                if (cmd != null) {
+                    String[] arguments = new String[args.length - 1];
+                    System.arraycopy(args, 1, arguments, 0, args.length - 1);
+                    try {
+                        String output = cmd.execute(core, arguments);
+                        System.out.println(output);
+                    } catch (CommandFailException e) {
+                        System.out.println(e.getMessage());
+                    }
+                } else {
+                    System.out.println("Unknown command! Please refer to readme");
                 }
             }
         }

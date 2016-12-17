@@ -9,6 +9,7 @@ import ru.spbau.mit.io.SnapshotSerializer;
 import ru.spbau.mit.util.FileSystem;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,16 +40,18 @@ public class Repository {
     /**
      * Adds filenames to index
      * @param filenames Array of {@link String} with filenames to add
+     * @throws FileNotFoundException if any of the files was not found
      */
-    public void addFiles(String[] filenames) {
+    public void addFiles(String[] filenames) throws FileNotFoundException {
         processFiles(filenames, this::addFile);
     }
 
     /**
-     * Removes filenames from index
-     * @param filenames Array of {@link String} with filenames to remove
+     * removes files from index
+     * @param filenames files to remove
+     * @throws FileNotFoundException if any of files was not found
      */
-    public void removeFiles(String[] filenames) {
+    public void removeFiles(String[] filenames) throws FileNotFoundException {
         processFiles(filenames, this::removeFile);
     }
 
@@ -230,12 +233,15 @@ public class Repository {
         }
     }
 
-    private void processFiles(String[] filenames, Consumer<File> consumer) {
+    private void processFiles(String[] filenames, Consumer<File> consumer) throws FileNotFoundException {
         for (String filename : filenames) {
             File file = new File(filename);
             if (file.isDirectory()) {
                 FileSystem.listExternalFiles(file).forEach(consumer);
             } else {
+                if (!file.exists()) {
+                    throw new FileNotFoundException(file.getName());
+                }
                 consumer.accept(file);
             }
         }

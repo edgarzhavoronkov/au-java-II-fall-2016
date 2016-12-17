@@ -7,4 +7,8 @@ public class AddFailException extends CommandFailException {
     public AddFailException(String message) {
         super(message);
     }
+
+    public AddFailException(Throwable cause) {
+        super(cause);
+    }
 }
