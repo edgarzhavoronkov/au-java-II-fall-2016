@@ -1,11 +1,12 @@
 package ru.spbau.mit.torrent.client;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import ru.spbau.mit.torrent.common.AbstractServer;
+import ru.spbau.mit.torrent.common.NetworkRequest;
+import ru.spbau.mit.torrent.common.ConnectionsHandler;
 import ru.spbau.mit.torrent.exceptions.*;
 import ru.spbau.mit.torrent.io.ClientSerializer;
-import ru.spbau.mit.torrent.tracker.TrackerRequest;
 import ru.spbau.mit.torrent.utils.FileInfo;
 import ru.spbau.mit.torrent.utils.FileManager;
 import ru.spbau.mit.torrent.utils.TorrentFile;
@@ -13,7 +14,6 @@ import ru.spbau.mit.torrent.utils.TorrentFile;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,11 +24,37 @@ import java.util.stream.Collectors;
 
 /**
  * Created by Эдгар on 30.10.2016.
- * Concrete implementation of abstract server for client
- * Basically in terms of handling requests
+ * Implementation of torrent client
+ * I replaced inheritance with composition
  */
 @Log4j2
-public class Client extends AbstractServer {
+public class Client {
+    //test driven design. Don't like it already
+    @Getter
+    private final ConnectionsHandler connectionsHandler = new ConnectionsHandler() {
+        @Override
+        public void handleRequest(InetAddress inetAddress, DataInputStream in, DataOutputStream out) throws IOException {
+            NetworkRequest request = NetworkRequest.values()[in.readInt()];
+            switch (request) {
+                case STAT: {
+                    long id = in.readLong();
+                    out.writeInt(files.get(id).getChunks().size());
+                    for (Integer chunk : files.get(id).getChunks()) {
+                        out.writeInt(chunk);
+                    }
+                    break;
+                }
+
+                case GET: {
+                    long fileID = in.readLong();
+                    int chunk = in.readInt();
+                    FileManager.readChunk(files.get(fileID), chunk, out);
+                    break;
+                }
+            }
+        }
+    };
+
     private Map<Long, TorrentFile> files;
     private final InetSocketAddress trackerAddress;
     private final String workingDir;
@@ -37,7 +63,7 @@ public class Client extends AbstractServer {
      * Creates client with given tracker address
      * @param trackerAddress - address of torrent tracker
      */
-    public Client(InetSocketAddress trackerAddress) {
+    Client(InetSocketAddress trackerAddress) {
         this(trackerAddress, System.getProperty("user.dir"));
     }
 
@@ -59,16 +85,17 @@ public class Client extends AbstractServer {
      * during state deserialization or sending update request
      * to tracker
      */
-    @Override
     public void start(int port) throws ClientStartFailException {
         try {
-            super.start(port);
+            log.info("Starting client at " + port);
+            getConnectionsHandler().start(port);
             files = ClientSerializer.loadFiles(workingDir);
             sendUpdate();
-        } catch (ServerStartFailException | RequestSendFailException | SerializationException e) {
+            log.info("Client is successfully running");
+        } catch (ConnectionHandlerStartFailException | RequestSendFailException | SerializationException e) {
             throw new ClientStartFailException(e);
         }
-        super.service.scheduleAtFixedRate(() -> {
+        getConnectionsHandler().getExecutor().scheduleAtFixedRate(() -> {
             try {
                 sendUpdate();
             } catch (RequestSendFailException e) {
@@ -83,12 +110,13 @@ public class Client extends AbstractServer {
      * @throws ClientStopFailedException - if serialization of client's
      * state failed or something gone wrong in halting of server stuff
      */
-    @Override
     public void stop() throws ClientStopFailedException {
         try {
+            log.info("Stopping client");
             ClientSerializer.saveFiles(workingDir, files);
-            super.stop();
-        } catch (ServerStopFailException | SerializationException e) {
+            getConnectionsHandler().stop();
+            log.info("Client successfully stopped");
+        } catch (ConnectionHandlerStopFailException | SerializationException e) {
             throw new ClientStopFailedException(e);
         }
     }
@@ -102,8 +130,9 @@ public class Client extends AbstractServer {
     public List<FileInfo> executeList() throws ListFailException {
         List<FileInfo> result = new ArrayList<>();
         try {
-            sendRequest(trackerAddress, (input, output) -> {
-                output.writeInt(TrackerRequest.LIST.ordinal());
+            getConnectionsHandler().sendRequest(trackerAddress, (input, output) -> {
+                log.info("Sending list request");
+                output.writeInt(NetworkRequest.LIST.ordinal());
 
                 int count = input.readInt();
                 for (int i = 0; i < count; ++i) {
@@ -112,6 +141,7 @@ public class Client extends AbstractServer {
                     long size = input.readLong();
                     result.add(new FileInfo(fileID, name, size));
                 }
+                log.info("Listed " + count + " file(s)");
             });
             return result;
         } catch (RequestSendFailException e) {
@@ -132,13 +162,15 @@ public class Client extends AbstractServer {
         }
         long size = file.length();
         try {
-            sendRequest(trackerAddress, (input, output) -> {
-                output.writeInt(TrackerRequest.UPLOAD.ordinal());
+            getConnectionsHandler().sendRequest(trackerAddress, (input, output) -> {
+                log.info("Sending upload request");
+                output.writeInt(NetworkRequest.UPLOAD.ordinal());
                 output.writeUTF(filename);
                 output.writeLong(size);
 
                 long id = input.readLong();
                 files.put(id, TorrentFile.full(file, size, id));
+                log.info("Successfully uploaded file " + filename + " with id=" + id);
             });
             sendUpdate();
         } catch (RequestSendFailException e) {
@@ -187,7 +219,7 @@ public class Client extends AbstractServer {
 
         List<Future<?>> result = seeds
                 .stream()
-                .map(seed -> super.service.submit(new DownloadHandler(seed, torrentFile)))
+                .map(seed -> getConnectionsHandler().getExecutor().submit(new DownloadHandler(seed, torrentFile)))
                 .collect(Collectors.toList());
 
         for (Future<?> future : result) {
@@ -207,8 +239,8 @@ public class Client extends AbstractServer {
     private List<InetSocketAddress> getSeeds(long fileID) throws NoSeedsFoundException {
         List<InetSocketAddress> res = new ArrayList<>();
         try {
-            sendRequest(trackerAddress, (input, output) -> {
-                output.writeInt(TrackerRequest.SOURCES.ordinal());
+            getConnectionsHandler().sendRequest(trackerAddress, (input, output) -> {
+                output.writeInt(NetworkRequest.SOURCES.ordinal());
                 output.writeLong(fileID);
                 int count = input.readInt();
                 for (int i = 0; i < count; ++i) {
@@ -218,7 +250,7 @@ public class Client extends AbstractServer {
                     int port = input.readInt();
                     InetAddress inetAddress = InetAddress.getByAddress(address);
                     InetSocketAddress seedAddress = new InetSocketAddress(inetAddress, port);
-                    if (port != super.localPort || inetAddress.equals(InetAddress.getLoopbackAddress())) {
+                    if (port != connectionsHandler.getLocalPort() || inetAddress.equals(InetAddress.getLoopbackAddress())) {
                         res.add(seedAddress);
                     }
                 }
@@ -229,32 +261,11 @@ public class Client extends AbstractServer {
         return res;
     }
 
-    @Override
-    protected void handleRequest(InetAddress inetAddress, DataInputStream in, DataOutputStream out) throws IOException {
-        ClientRequest request = ClientRequest.values()[in.readInt()];
-        switch (request) {
-            case STAT: {
-                long id = in.readLong();
-                out.writeInt(files.get(id).getChunks().size());
-                for (Integer chunk : files.get(id).getChunks()) {
-                    out.writeInt(chunk);
-                }
-                break;
-            }
-
-            case GET: {
-                long fileID = in.readLong();
-                int chunk = in.readInt();
-                FileManager.readChunk(files.get(fileID), chunk, out);
-                break;
-            }
-        }
-    }
-
     private void sendUpdate() throws RequestSendFailException {
-        sendRequest(trackerAddress, (input, output) -> {
-            output.writeInt(TrackerRequest.UPDATE.ordinal());
-            output.writeInt(super.localPort);
+        getConnectionsHandler().sendRequest(trackerAddress, (input, output) -> {
+            log.info("Sending update request");
+            output.writeInt(NetworkRequest.UPDATE.ordinal());
+            output.writeInt(connectionsHandler.getLocalPort());
             output.writeInt(files.size());
             for (TorrentFile file : files.values()) {
                 output.writeLong(file.getFileID());
@@ -263,17 +274,8 @@ public class Client extends AbstractServer {
             if (!updated) {
                 log.warn("Update failed!");
             }
+            log.info("Successfully updated");
         });
-    }
-
-    private void sendRequest(InetSocketAddress trackerAddress, ClientTask task) throws RequestSendFailException {
-        try (Socket socket = new Socket(trackerAddress.getAddress(), trackerAddress.getPort())) {
-            DataInputStream input = new DataInputStream(socket.getInputStream());
-            DataOutputStream output = new DataOutputStream(socket.getOutputStream());
-            task.execute(input, output);
-        } catch (IOException e) {
-            throw new RequestSendFailException(e);
-        }
     }
 
     /**
@@ -291,7 +293,7 @@ public class Client extends AbstractServer {
         @Override
         public void run() {
             try {
-                sendRequest(seed, (input, output) -> {
+                getConnectionsHandler().sendRequest(seed, (input, output) -> {
                     List<Integer> chunks = getChunks(input, output);
 
                     for (Integer chunk : chunks) {
@@ -306,7 +308,7 @@ public class Client extends AbstractServer {
         }
 
         private void loadChunk(int chunk, DataInputStream input, DataOutputStream output) throws IOException {
-            output.writeInt(ClientRequest.GET.ordinal());
+            output.writeInt(NetworkRequest.GET.ordinal());
             output.writeLong(torrentFile.getFileID());
             output.writeInt(chunk);
             FileManager.writeChunk(torrentFile, chunk, input);
@@ -315,7 +317,7 @@ public class Client extends AbstractServer {
 
         private List<Integer> getChunks(DataInputStream input, DataOutputStream output) throws IOException {
             List<Integer> res = new ArrayList<>();
-            output.writeInt(ClientRequest.STAT.ordinal());
+            output.writeInt(NetworkRequest.STAT.ordinal());
             output.writeLong(torrentFile.getFileID());
             int count = input.readInt();
             for (int i = 0; i < count; ++i) {

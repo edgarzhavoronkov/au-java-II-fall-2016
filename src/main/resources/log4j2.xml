@@ -26,6 +26,10 @@
             <AppenderRef ref="CONSOLE"/>
         </logger>
 
+        <logger name="ru.spbau.mit.torrent.common.ConnectionsHandler" level="INFO" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+        </logger>
+
         <logger name="ru.spbau.mit.torrent.client.Client" level="INFO" additivity="false">
             <AppenderRef ref="CONSOLE"/>
         </logger>

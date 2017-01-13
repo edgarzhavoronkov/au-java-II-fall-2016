@@ -6,16 +6,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import ru.spbau.mit.torrent.client.Client;
-import ru.spbau.mit.torrent.exceptions.UploadFailException;
 import ru.spbau.mit.torrent.tracker.Tracker;
 import ru.spbau.mit.torrent.utils.FileInfo;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
@@ -23,9 +18,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
 
 /**
  * Created by Эдгар on 12.12.2016.
@@ -34,7 +26,6 @@ public class SimpleClientTrackerTest {
     @Rule
     public final TemporaryFolder root = new TemporaryFolder();
 
-    private File trackerRoot;
     private File seed1Root;
     private File seed2Root;
 
@@ -44,8 +35,8 @@ public class SimpleClientTrackerTest {
 
 
     @Before
-    public void setUp() throws Throwable {
-        trackerRoot = root.newFolder();
+    public void setUp() throws Exception {
+        File trackerRoot = root.newFolder();
         seed1Root = root.newFolder();
         seed2Root = root.newFolder();
 
@@ -71,7 +62,7 @@ public class SimpleClientTrackerTest {
     }
 
     @Test
-    public void testSimple() throws Throwable {
+    public void testSimple() throws Exception {
         File seed1File = new File(seed1Root, "a.txt");
         FileUtils.write(seed1File, "This is a sample file", Charset.forName("utf-8"));
 
@@ -93,7 +84,7 @@ public class SimpleClientTrackerTest {
     }
 
     @After
-    public void tearDown() throws Throwable {
+    public void tearDown() throws Exception {
         tracker.stop();
         seed1.stop();
         seed2.stop();
