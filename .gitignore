@@ -1,1 +1,5 @@
 .idea/*
+target/*
+logs
+sandbox
+src/test/resources/*
